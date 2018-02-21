@@ -5,6 +5,7 @@
 
 from __future__ import print_function
 from ipywidgets import interact, interactive
+import collections
 
 class Parameter:
 
@@ -32,10 +33,21 @@ class FormFactory:
     parameters = None # overload this with parameters in the form
 
     def __init__(self):
-        self.inputs = dict() 
+        self.inputs = dict()
+        # map name to parameter
+        self.name2param = dict()
+        for p in self.parameters: self.name2param[p.name] = p
         return
     
-    def setParams(self, **kwds):
+    def createForm(self):
+        kwds = dict()
+        for p in self.parameters:
+            v = p.widget or p.choices or p.range or p.default or p.value
+            kwds[p.name] = v
+            continue
+        return interactive(self.acceptInputs, **kwds)
+
+    def acceptInputs(self, **kwds):
         inputs = self.inputs
         failed = False
         III = lambda x: x
@@ -52,14 +64,6 @@ class FormFactory:
         else:
             print()
         return
-
-    def createForm(self):
-        kwds = dict()
-        for p in self.parameters:
-            v = p.widget or p.choices or p.range or p.default or p.value
-            kwds[p.name] = v
-            continue
-        return interactive(self.setParams, **kwds)
 
 
 # End of file 
