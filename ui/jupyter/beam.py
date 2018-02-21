@@ -113,11 +113,10 @@ class Step2_Outdir(wiz.Step):
     
     def simulate(self, dry_run=True):
         if dry_run:
-            print(self.context.instrument)
             params = self.context.params
-            for k, v in params.items():
-                print(k,v)
-            print(self.context.outdir)
+            cmd = 'cd ' + self.context.outdir + '; mcvine instruments ' + self.context.instrument.lower()
+            for k, v in params.items(): cmd += ' --%s=%r' % (k,v)
+            print(cmd)
             return
         return
 
