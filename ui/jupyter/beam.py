@@ -76,7 +76,6 @@ class Step1_Parameters(wiz.Step):
         self.title = title = ipyw.HTML("<h4>Beam configuration</h4>")
         self.form_factory = eval(self.context.instrument)()
         form = self.form_factory.createForm()
-        form.add_class("wide-inputs")
         OK = ipyw.Button(description='OK')
         OK.on_click(self.handle_next_button_click)
         widgets= [title, form, OK]
@@ -126,11 +125,11 @@ class Step2_Outdir(wiz.Step):
         print("  -- Please wait...")
         rt = os.system(cmd)
         if rt:
-            print("Your simulation failed")
+            print("* Your simulation failed")
         else:
-            print("Your simulation succeeded")
+            print("* Your simulation succeeded")
         #
-        print("Logging of simulation is available at %s" % logout)
+        print("  -- Logging of simulation is available at %s" % logout)
         return
 
 
