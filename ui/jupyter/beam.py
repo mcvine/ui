@@ -76,6 +76,7 @@ class Step1_Parameters(wiz.Step):
         self.title = title = ipyw.HTML("<h4>Beam configuration</h4>")
         self.form_factory = eval(self.context.instrument)()
         form = self.form_factory.createForm()
+        form.add_class("wide-inputs")
         OK = ipyw.Button(description='OK')
         OK.on_click(self.handle_next_button_click)
         widgets= [title, form, OK]
@@ -115,7 +116,8 @@ class Step2_Outdir(wiz.Step):
         params = self.context.params
         cmd = 'cd ' + self.context.outdir + '; mcvine instruments ' + self.context.instrument.lower() + " beam"
         for k, v in params.items(): cmd += ' --%s=%r' % (k,v)
-        cmd += ">%s/log.sim 2>&1" % self.context.outdir
+        logout = "%s/log.sim" % self.context.outdir
+        cmd += ">%s 2>&1" % logout
         if dry_run:
             print(cmd)
             return
@@ -127,6 +129,8 @@ class Step2_Outdir(wiz.Step):
             print("Your simulation failed")
         else:
             print("Your simulation succeeded")
+        #
+        print("Logging of simulation is available at %s" % logout)
         return
 
 

@@ -46,7 +46,9 @@ class FormFactory:
             v = p.widget or p.choices or p.range or p.default or p.value
             kwds[p.label or p.name] = v
             continue
-        return interactive(self.acceptInputs, **kwds)
+        form = interactive(self.acceptInputs, **kwds)
+        form.add_class("wide-inputs") # allow customized css below
+        return form
 
     def acceptInputs(self, **kwds):
         inputs = self.inputs
@@ -73,7 +75,7 @@ from IPython.core.display import HTML
 from IPython.display import display
 display(HTML("""
 <style>
-.widget-inline-hbox .widget-label {
+.wide-inputs .widget-inline-hbox .widget-label {
   width: 140px;
 }
 </style>
