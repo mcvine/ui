@@ -66,4 +66,15 @@ class FormFactory:
         return
 
 
+# XXX customize input label width XXX
+from IPython.core.display import HTML
+from IPython.display import display
+display(HTML("""
+<style>
+.widget-inline-hbox .widget-label {
+  width: 120px;
+}
+</style>
+"""))
+
 # End of file 
