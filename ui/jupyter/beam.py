@@ -12,9 +12,9 @@ import ipywe.fileselector
 import ipywe.wizard as wiz
 from .Form import FormFactory
 
-def arcs():
+def beam():
     context = wiz.Context()
-    step1 = Step1_Parameters(context)
+    step1 = Step0_Instrument(context)
     step1.show()
     return context
 
@@ -51,11 +51,29 @@ class SEQUOIA(DGS):
     ]
     
         
+class Step0_Instrument(wiz.Step):
+
+    def createPanel(self):
+        self.title = title = ipyw.HTML("<h4>Choose instrument</h4>")
+        self.select = ipyw.Dropdown(options=['ARCS', 'SEQUOIA'], value='ARCS', description='Insturment:')
+        OK = ipyw.Button(description='OK')
+        OK.on_click(self.handle_next_button_click)
+        widgets= [self.title, self.select, OK]
+        return ipyw.VBox(children=widgets)
+
+    def validate(self):
+        self.context.instrument = self.select.value
+        return True
+    
+    def nextStep(self):
+        step1 = Step1_Parameters(self.context)
+        step1.show()
+        
 class Step1_Parameters(wiz.Step):
 
     def createPanel(self):
-        self.title = title = ipyw.Label("Beam configuration")
-        self.form_factory = ARCS()
+        self.title = title = ipyw.HTML("<h4>Beam configuration</h4>")
+        self.form_factory = eval(self.context.instrument)()
         form = self.form_factory.createForm()
         OK = ipyw.Button(description='OK')
         OK.on_click(self.handle_next_button_click)
@@ -79,7 +97,7 @@ class Step2_Outdir(wiz.Step):
     
     def createPanel(self):
         self.select = ipywe.fileselector.FileSelectorPanel(
-            instruction='select output directory', start_dir=os.path.expanduser('~'), type='directory',
+            instruction='Select output directory', start_dir=os.path.expanduser('~'), type='directory',
             next=self.on_sel_outdir
         )
         widgets= [self.select.panel]
@@ -92,12 +110,14 @@ class Step2_Outdir(wiz.Step):
     def nextStep(self):
         return self.simulate()
     
-    def simulate(self):
-        print(self.context)
-        params = self.context.params
-        for k, v in params.items():
-            print(k,v)
-        print(self.context.outdir)
+    def simulate(self, dry_run=True):
+        if dry_run:
+            print self.context.instrument
+            params = self.context.params
+            for k, v in params.items():
+                print(k,v)
+            print(self.context.outdir)
+            return
         return
 
 
