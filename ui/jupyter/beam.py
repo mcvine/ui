@@ -4,18 +4,20 @@
 #
 
 from __future__ import print_function
+import os
 from ipywidgets import interact, interactive
 import ipywidgets as widgets
 from IPython.display import display
+import ipywe.fileselector
+
+def arcs(): return ARCS().createWidget()
 
 
-def beam(): return Beam().createWidget()
-
-
-class Beam:
+class ARCS:
 
     def __init__(self):
         self.params = dict()
+        self.outdir = None
         return
     
     def g(self, fc, fermi_nu, T0_nu, E, emission_time, ncount, nodes, with_moderator_angling):
@@ -36,7 +38,7 @@ class Beam:
         return
 
     def createWidget(self):
-        w = interactive(
+        self.form = w = interactive(
             self.g,
             fc=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST'],
             fermi_nu=[600., 480., 360., 300.],
@@ -47,15 +49,27 @@ class Beam:
             nodes=(1,20),
             with_moderator_angling=True,
             )
-        submit_button = widgets.Button(description="Submit")
+        #
+        outdir_sel= ipywe.fileselector.FileSelectorPanel(
+            instruction='select output directory', start_dir=os.path.expanduser('~'), type='directory',
+            next=self.on_sel_outdir
+        )
+        #
+        self.submit_button = submit_button = widgets.Button(description="Submit")
         submit_button.on_click(self.simulate)
-        panel = widgets.VBox(children=[w, submit_button])
+        self.panel = panel = widgets.VBox(children=[w, outdir_sel.panel, submit_button])
         return panel
+
+    def on_sel_outdir(self, selected):
+        self.outdir = selected
+        self.panel.children = [self.form, widgets.Label("Selected output dir: %s" % selected), self.submit_button]
+        return
 
     def simulate(self, ev):
         params = self.params
         for k, v in params.items():
             print(k,v)
+        print(self.outdir)
         return
 
     
