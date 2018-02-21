@@ -10,6 +10,7 @@ import collections
 class Parameter:
 
     name = None
+    label = None
     default = None
     range = None
     choices = None
@@ -43,7 +44,7 @@ class FormFactory:
         kwds = dict()
         for p in self.parameters:
             v = p.widget or p.choices or p.range or p.default or p.value
-            kwds[p.name] = v
+            kwds[p.label or p.name] = v
             continue
         return interactive(self.acceptInputs, **kwds)
 
@@ -53,7 +54,8 @@ class FormFactory:
         III = lambda x: x
         for p in self.parameters:
             try:
-                inputs[p.name] = (p.converter or III)(kwds[p.name])
+                v = (p.converter or III)(kwds[p.label] if p.label in kwds else kwds[p.name])
+                inputs[p.name] = v
             except Exception as e:
                 failed = e
                 break
@@ -72,7 +74,7 @@ from IPython.display import display
 display(HTML("""
 <style>
 .widget-inline-hbox .widget-label {
-  width: 120px;
+  width: 140px;
 }
 </style>
 """))

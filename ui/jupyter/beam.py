@@ -22,11 +22,12 @@ def beam():
 class DGS(FormFactory):
 
     P = FormFactory.P
+    # names must match parameters in "mcvine <instrument> beam" CLI
     parameters = [
-        P(name="nominal_energy", widget=ipyw.Text("100."), converter=float),
-        P(name="emission_time", widget=ipyw.Text("01."), converter=float),
-        P(name="neutron_count", widget=ipyw.Text("1e7"), converter=lambda x: int(float(x))),
-        P(name="nodes", range=(1,20)),
+        P(name='E', label="Nominal energy", widget=ipyw.Text("100."), converter=float),
+        P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
+        P(name='ncount', label="Neutron count", widget=ipyw.Text("1e7"), converter=lambda x: int(float(x))),
+        P(name="nodes", label="Number of cores", range=(1,20)),
     ]
 
 
@@ -34,9 +35,9 @@ class ARCS(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
-        P(name="fermi_chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
-        P(name="fermi_frequency", choices=[600., 480., 360., 300.]),
-        P(name="T0_frequency", choices=["60.", "120."], converter=float),
+        P(name="fermi_chopper", label="Fermi chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
+        P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
+        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
         P(name="with_moderator_angling", default=True),
     ]
     
@@ -45,9 +46,9 @@ class SEQUOIA(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
-        P(name="fermi_chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
-        P(name="fermi_frequency", choices=[600., 480., 360., 300.]),
-        P(name="T0_frequency", choices=["60.", "120."], converter=float),
+        P(name="fermi_chopper", label="Fermi chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
+        P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
+        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
     ]
     
         
@@ -98,7 +99,7 @@ class Step2_Outdir(wiz.Step):
     def createPanel(self):
         self.select = ipywe.fileselector.FileSelectorPanel(
             instruction='Select output directory', start_dir=os.path.expanduser('~'), type='directory',
-            next=self.on_sel_outdir
+            next=self.on_sel_outdir, newdir_toolbar_button=True
         )
         widgets= [self.select.panel]
         return ipyw.VBox(children=widgets)
@@ -112,7 +113,7 @@ class Step2_Outdir(wiz.Step):
     
     def simulate(self, dry_run=True):
         if dry_run:
-            print self.context.instrument
+            print(self.context.instrument)
             params = self.context.params
             for k, v in params.items():
                 print(k,v)
