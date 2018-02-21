@@ -10,6 +10,7 @@ import ipywidgets as ipyw
 from IPython.display import display
 import ipywe.fileselector
 import ipywe.wizard as wiz
+from .Form import FormFactory
 
 def arcs():
     context = wiz.Context()
@@ -18,57 +19,51 @@ def arcs():
     return context
 
 
-class ARCS:
+class DGS(FormFactory):
 
-    def __init__(self):
-        self.params = dict()
-        self.outdir = None
-        return
+    P = FormFactory.P
+    parameters = [
+        P(name="nominal_energy", widget=ipyw.Text("100."), converter=float),
+        P(name="emission_time", widget=ipyw.Text("01."), converter=float),
+        P(name="neutron_count", widget=ipyw.Text("1e7"), converter=lambda x: int(float(x))),
+        P(name="nodes", range=(1,20)),
+    ]
+
+
+class ARCS(DGS):
+
+    P = FormFactory.P
+    parameters = DGS.parameters + [
+        P(name="fermi_chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
+        P(name="fermi_frequency", choices=[600., 480., 360., 300.]),
+        P(name="T0_frequency", choices=["60.", "120."], converter=float),
+        P(name="with_moderator_angling", default=True),
+    ]
     
-    def setParams(self, fc, fermi_nu, T0_nu, E, emission_time, ncount, nodes, with_moderator_angling):
-        params = self.params
-        try:
-            T0_nu = float(T0_nu)
-            E = float(E)
-            emission_time = float(emission_time)
-            ncount = int(float(ncount))
-            print()
-            params.update(
-                fc=fc, fermi_nu=fermi_nu, T0_nu=T0_nu, E=E, emission_time=emission_time,
-                ncount=ncount, nodes=nodes, with_moderator_angling=with_moderator_angling
-            )
-        except Exception as e:
-            print("Wrong input.  %s" % e)
-            self.params = dict()
-        return
+        
+class SEQUOIA(DGS):
 
-    def createForm(self):
-        return interactive(
-            self.setParams,
-            fc=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST'],
-            fermi_nu=[600., 480., 360., 300.],
-            T0_nu=["60.", "120."],
-            E=ipyw.Text("100."),
-            emission_time=ipyw.Text("-1."),
-            ncount=ipyw.Text("1e7"),
-            nodes=(1,20),
-            with_moderator_angling=True,
-            )
-
-
+    P = FormFactory.P
+    parameters = DGS.parameters + [
+        P(name="fermi_chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
+        P(name="fermi_frequency", choices=[600., 480., 360., 300.]),
+        P(name="T0_frequency", choices=["60.", "120."], converter=float),
+    ]
+    
+        
 class Step1_Parameters(wiz.Step):
 
     def createPanel(self):
-        self.text = text = ipyw.Text(description="Instrument beam configuration", place_holder='instrument')
+        self.title = title = ipyw.Label("Beam configuration")
         self.form_factory = ARCS()
         form = self.form_factory.createForm()
         OK = ipyw.Button(description='OK')
         OK.on_click(self.handle_next_button_click)
-        widgets= [form, OK]
+        widgets= [title, form, OK]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
-        params = self.form_factory.params
+        params = self.form_factory.inputs
         # check user input
         if not params:
             print("Please check your inputs")
