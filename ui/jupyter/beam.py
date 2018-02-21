@@ -111,13 +111,22 @@ class Step2_Outdir(wiz.Step):
     def nextStep(self):
         return self.simulate()
     
-    def simulate(self, dry_run=True):
+    def simulate(self, dry_run=False):
+        params = self.context.params
+        cmd = 'cd ' + self.context.outdir + '; mcvine instruments ' + self.context.instrument.lower() + " beam"
+        for k, v in params.items(): cmd += ' --%s=%r' % (k,v)
+        cmd += ">%s/log.sim 2>&1" % self.context.outdir
         if dry_run:
-            params = self.context.params
-            cmd = 'cd ' + self.context.outdir + '; mcvine instruments ' + self.context.instrument.lower()
-            for k, v in params.items(): cmd += ' --%s=%r' % (k,v)
             print(cmd)
             return
+        print("* Running simulation at %s..." % self.context.outdir)
+        print("  -- Cmd: %s" % cmd)
+        print("  -- Please wait...")
+        rt = os.system(cmd)
+        if rt:
+            print("Your simulation failed")
+        else:
+            print("Your simulation succeeded")
         return
 
 
