@@ -14,8 +14,19 @@ from .Form import FormFactory
 
 def beam():
     context = wiz.Context()
-    step1 = Step0_Instrument(context)
-    step1.show()
+    from .user import getEmailFromConfig, Step_Email
+    email = getEmailFromConfig()
+    if not email:
+        class Step00(Step_Email):
+            def nextStep(self):
+                nextstep = Step0_Instrument(self.context)
+                nextstep.show()
+                return
+        start = Step00(context)
+    else:
+        context.email = email
+        start = Step0_Instrument(context)
+    start.show()
     return context
 
 
@@ -50,8 +61,8 @@ class SEQUOIA(DGS):
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
         P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
     ]
-    
-        
+
+
 class Step0_Instrument(wiz.Step):
 
     def createPanel(self):
@@ -124,12 +135,22 @@ class Step2_Outdir(wiz.Step):
         print("  -- Cmd: %s" % cmd)
         print("  -- Please wait...")
         rt = os.system(cmd)
-        if rt:
-            print("* Your simulation failed")
-        else:
-            print("* Your simulation succeeded")
+        status = "failed" if rt else "succeeded"
+        print("* Your simulation %s" % status)
         #
         print("  -- Logging of simulation is available at %s" % logout)
+        body="Simulation of %s beam %s. Please check log file %s" % (
+            self.context.instrument, status, logout)
+        from .utils import sendmail
+        try:
+            sendmail(
+                "mcvine.neutron@gmail.com", self.context.email,
+                subject="mcvine simulation done", body=body
+                )
+        except Exception as e:
+            import warnings
+            warnings.warn(str(e))
+            return
         return
 
 
