@@ -85,11 +85,31 @@ class CNCS(DGS):
     ]
 
 
+class HYSPEC(DGS):
+
+    P = FormFactory.P
+    parameters = DGS.parameters + [
+        P(name="fermi_nu", label="Fermi chopper frequency", choices=["180."], converter=float),
+        P(name='E', label="Nominal energy", default="20.", converter=float),
+        P(name="Emin", label="Minimum incident energy", default="10.", converter=float),
+        P(name="Emax", label="Maximum incident energy", default="30.", converter=float),
+        P(name="LMS", label = 'monochromator to sample distance. unit: meter', default="1.8", converter=float)
+    ]
+
+    def crossCheckInputs(self):
+        inputs = self.inputs
+        if inputs['Emin'] >= inputs['E']:
+            raise ValueError("Minimum incident energy should be smaller than nominal energy")
+        if inputs['Emax'] <= inputs['E']:
+            raise ValueError("Maximum incident energy should be larger than nominal energy")
+
+
 class Step0_Instrument(wiz.Step):
 
     def createPanel(self):
         self.title = title = ipyw.HTML("<h4>Choose instrument</h4>")
-        self.select = ipyw.Dropdown(options=['ARCS', 'SEQUOIA', 'CNCS'], value='ARCS', description='Insturment:')
+        self.select = ipyw.Dropdown(
+            options=['ARCS', 'SEQUOIA', 'CNCS', "HYSPEC"], value='ARCS', description='Insturment:')
         OK = ipyw.Button(description='OK')
         OK.on_click(self.handle_next_button_click)
         widgets= [self.title, self.select, OK]
