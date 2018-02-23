@@ -65,11 +65,19 @@ class FormFactory:
                 failed = e
                 break
             continue
+        if not failed:
+            try:
+                self.crossCheckInputs()
+            except Exception as e:
+                failed = e
         if failed:
             print("Wrong input.  %s" % e)
             self.inputs = dict()
         else:
             print()
+        return
+
+    def crossCheckInputs(self):
         return
 
 
