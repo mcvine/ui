@@ -35,9 +35,12 @@ class FormFactory:
 
     def __init__(self):
         self.inputs = dict()
-        # map name to parameter
-        self.name2param = dict()
-        for p in self.parameters: self.name2param[p.name] = p
+        # gather parameters and establish a map from name to parameter
+        self.name2param = collections.OrderedDict()
+        for p in self.__class__.parameters: self.name2param[p.name] = p
+        self.parameters = self.name2param.values()
+        # parameters are now unique.
+        # For any duplicates, the later defines override the earlier ones
         return
     
     def createForm(self):
