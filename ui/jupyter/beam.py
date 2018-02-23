@@ -36,7 +36,6 @@ class DGS(FormFactory):
     # names must match parameters in "mcvine <instrument> beam" CLI
     parameters = [
         P(name='E', label="Nominal energy", widget=ipyw.Text("100."), converter=float),
-        P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name='ncount', label="Neutron count", widget=ipyw.Text("1e7"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
     ]
@@ -46,6 +45,7 @@ class ARCS(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
+        P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
         P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
@@ -57,9 +57,31 @@ class SEQUOIA(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
+        P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
         P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
+    ]
+
+
+CNCS_fluxmode2angle_dict = {
+    'high flux': 9.0,
+    'intermediate': 4.4,
+    'high resolution': 2.0,
+}
+CNCS_fluxmode2angle = lambda x: CNCS_fluxmode2angle_dict[x]
+class CNCS(DGS):
+
+    P = FormFactory.P
+    parameters = DGS.parameters + [
+        P(name='E', label="Nominal energy", widget=ipyw.Text("5."), converter=float),
+        P(name="f1", label="Chopper freq 1", default="60.", converter=float),
+        P(name="f2", label="Chopper freq 2", default="60.", converter=float),
+        P(name="f3", label="Chopper freq 3", default="60.", converter=float),
+        P(name="f41", label="Chopper freq 41", default="300.", converter=float),
+        P(name="f42", label="Chopper freq 42", default="300.", converter=float),
+        P(name="fluxmode", label="Flux mode",
+          choices=["high flux", "intermediate", "high resolution"], converter=CNCS_fluxmode2angle),
     ]
 
 
@@ -67,7 +89,7 @@ class Step0_Instrument(wiz.Step):
 
     def createPanel(self):
         self.title = title = ipyw.HTML("<h4>Choose instrument</h4>")
-        self.select = ipyw.Dropdown(options=['ARCS', 'SEQUOIA'], value='ARCS', description='Insturment:')
+        self.select = ipyw.Dropdown(options=['ARCS', 'SEQUOIA', 'CNCS'], value='ARCS', description='Insturment:')
         OK = ipyw.Button(description='OK')
         OK.on_click(self.handle_next_button_click)
         widgets= [self.title, self.select, OK]
