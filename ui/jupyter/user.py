@@ -25,6 +25,8 @@ def saveEmailToConfig(email):
     except ConfigParser.DuplicateSectionError:
         pass
     config.set('user', 'email', email)
+    dir = os.path.dirname(mcvine_config)
+    if not os.path.exists(dir): os.makedirs(dir)
     with open(mcvine_config, 'ab') as f:
         config.write(f)
     return
