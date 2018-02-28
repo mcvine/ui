@@ -12,8 +12,8 @@ import ipywe.fileselector
 import ipywe.wizard as wiz
 from .Form import FormFactory
 
-def beam():
-    context = wiz.Context()
+def beam(context=None):
+    context = context or wiz.Context()
     from .user import getEmailFromConfig, Step_Email
     email = getEmailFromConfig()
     if not email:
@@ -214,6 +214,7 @@ class Step3_Confirm(WizStep):
             labels.append(k)
             values.append(str(v))
             continue
+        labels.append("Output dir"); values.append(self.context.outdir)
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         self.dry_run = ipyw.Checkbox(value=True, description="Dry run")
@@ -239,15 +240,17 @@ class Step3_Confirm(WizStep):
             print("** The following command will be run if it is not a dry run")
             print("")
             print(' '*4 + cmd)
-            return
-        print("* Running simulation at %s..." % self.context.outdir)
-        print("  -- Cmd: %s" % cmd)
-        print("  -- Please wait...")
-        rt = os.system(cmd)
-        status = "failed" if rt else "succeeded"
-        print("* Your simulation %s" % status)
-        #
-        print("  -- Logging of simulation is available at %s" % logout)
+            status = "dry-run"
+        else:
+            print("* Running simulation at %s..." % self.context.outdir)
+            print("  -- Cmd: %s" % cmd)
+            print("  -- Please wait...")
+            rt = os.system(cmd)
+            status = "failed" if rt else "succeeded"
+            print("* Your simulation %s" % status)
+            #
+            print("  -- Logging of simulation is available at %s" % logout)
+        # email
         body="Simulation of %s beam %s. Please check log file %s" % (
             self.context.instrument, status, logout)
         from .utils import sendmail
