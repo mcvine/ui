@@ -104,35 +104,40 @@ class HYSPEC(DGS):
             raise ValueError("Maximum incident energy should be larger than nominal energy")
 
 
+wizard_step_body_layout = ipyw.Layout(border="1px solid lightgray", padding="10px", margin="10px 0px")
+
 class Step0_Instrument(wiz.Step):
 
-    def createPanel(self):
+    def createBody(self):
         self.title = title = ipyw.HTML("<h4>Choose instrument</h4>")
         self.select = ipyw.Dropdown(
             options=['ARCS', 'SEQUOIA', 'CNCS', "HYSPEC"], value='ARCS', description='Insturment:')
-        OK = ipyw.Button(description='OK')
-        OK.on_click(self.handle_next_button_click)
-        widgets= [self.title, self.select, OK]
-        return ipyw.VBox(children=widgets)
+        widgets= [self.title, self.select]
+        return ipyw.VBox(children=widgets, layout=wizard_step_body_layout)
 
     def validate(self):
         self.context.instrument = self.select.value
         return True
     
+    def createNextStep(self):
+        return Step1_Parameters(self.context)
+    
     def nextStep(self):
-        step1 = Step1_Parameters(self.context)
-        step1.show()
-        
+        # need to overload this function, since the next step depends on
+        # the choice in this step
+        self.next_step = next_step = self.createNextStep()
+        next_step.previous_step = self
+        next_step.show()
+        return
+                                                                            
 class Step1_Parameters(wiz.Step):
 
-    def createPanel(self):
-        self.title = title = ipyw.HTML("<h4>Beam configuration</h4>")
+    def createBody(self):
         self.form_factory = eval(self.context.instrument)()
+        self.title = title = ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
         form = self.form_factory.createForm()
-        OK = ipyw.Button(description='OK')
-        OK.on_click(self.handle_next_button_click)
-        widgets= [title, form, OK]
-        return ipyw.VBox(children=widgets)
+        widgets= [title, form]
+        return ipyw.VBox(children=widgets, layout=wizard_step_body_layout)
 
     def validate(self):
         params = self.form_factory.inputs
@@ -143,24 +148,60 @@ class Step1_Parameters(wiz.Step):
         self.context.params = params # save user input
         return True
     
-    def nextStep(self):
-        step2 = Step2_Outdir(self.context)
-        step2.show()
-        
+    def createNextStep(self):
+        return Step2_Outdir(self.context)
+
 class Step2_Outdir(wiz.Step):
     
-    def createPanel(self):
+    def createBody(self):
         self.select = ipywe.fileselector.FileSelectorPanel(
             instruction='Select output directory', start_dir=os.path.expanduser('~'), type='directory',
-            next=self.on_sel_outdir, newdir_toolbar_button=True
+            next=self.on_sel_outdir, newdir_toolbar_button=True, stay_alive=True,
         )
-        widgets= [self.select.panel]
-        return ipyw.VBox(children=widgets)
+        self.body = ipyw.VBox(children=[self.select.panel], layout=wizard_step_body_layout)
+        return self.body
 
     def on_sel_outdir(self, selected):
         self.context.outdir = selected
-        return self.nextStep()
+        text = ipyw.HTML("<p>Selected output dir: %s</p>" % selected)
+        change_button = ipyw.Button(description="Change")
+        change_button.on_click(self.on_change_selection)
+        self.body.children=[text, change_button]
+        return
+
+    def on_change_selection(self, _):
+        self.body.children=[self.select.panel]
+        return
+
+    def validate(self):
+        good = hasattr(self.context, 'outdir') and self.context.outdir and os.path.exists(self.context.outdir) and os.path.isdir(self.context.outdir)
+        if not good:
+            print("Please select output directory")
+            return False
+        return True
     
+    def createNextStep(self):
+        return Step3_Confirm(self.context)
+
+
+class Step3_Confirm(wiz.Step):
+
+    def createBody(self):
+        title = ipyw.HTML("<h4>Confirmation</h4>")
+        labels = ["Instrument"]; values = [self.context.instrument]
+        params = self.context.params
+        for k, v in params.items():
+            labels.append(k)
+            values.append(str(v))
+            continue
+        labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
+        values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
+        panel = ipyw.VBox(children=[title, ipyw.HBox(children=[labels_html, values_html])], layout=wizard_step_body_layout)
+        return panel
+
+    def validate(self):
+        return True
+
     def nextStep(self):
         return self.simulate()
     
