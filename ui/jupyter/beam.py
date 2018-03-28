@@ -104,35 +104,17 @@ class HYSPEC(DGS):
             raise ValueError("Maximum incident energy should be larger than nominal energy")
 
 
-class WizStep(wiz.Step):
-    body_layout = ipyw.Layout(border="1px solid lightgray", padding="10px", margin="10px 0px")
-
-    def createPanel(self):
-        body = self.createBody()
-        # unify layout
-        body.layout = self.body_layout
-        #
-        navigation = self.createNavigation()
-        #
-        status_bar = self.createStatusBar()
-        panel = ipyw.VBox(children=[body, navigation, status_bar])
-        return panel
-
-    def createStatusBar(self):
-        self.status_bar = ipyw.HTML("")
-        return self.status_bar
-
-    def updateStatusBar(self, html):
-        self.status_bar.value = html
-    
+from .wizard import WizStep
 
 class Step0_Instrument(WizStep):
 
+    def createHeader(self):
+        return ipyw.HTML("<h4>Choose instrument</h4>")
+
     def createBody(self):
-        self.title = title = ipyw.HTML("<h4>Choose instrument</h4>")
         self.select = ipyw.Dropdown(
             options=['ARCS', 'SEQUOIA', 'CNCS', "HYSPEC"], value='ARCS', description='Insturment:')
-        widgets= [self.title, self.select]
+        widgets= [self.select]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
@@ -152,11 +134,13 @@ class Step0_Instrument(WizStep):
                                                                             
 class Step1_Parameters(WizStep):
 
+    def createHeader(self):
+        return ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
+    
     def createBody(self):
         self.form_factory = eval(self.context.instrument)()
-        self.title = title = ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
         form = self.form_factory.createForm()
-        widgets= [title, form]
+        widgets= [form]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
@@ -206,8 +190,10 @@ class Step2_Outdir(WizStep):
 
 class Step3_Confirm(WizStep):
 
+    def createHeader(self):
+        return ipyw.HTML("<h4>Confirmation</h4>")
+    
     def createBody(self):
-        title = ipyw.HTML("<h4>Confirmation</h4>")
         labels = ["Instrument"]; values = [self.context.instrument]
         params = self.context.params
         for k, v in params.items():
@@ -220,7 +206,7 @@ class Step3_Confirm(WizStep):
         self.dry_run = ipyw.Checkbox(value=True, description="Dry run")
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
-        panel = ipyw.VBox(children=[title, info, self.dry_run])
+        panel = ipyw.VBox(children=[info, self.dry_run])
         return panel
 
     def validate(self):
