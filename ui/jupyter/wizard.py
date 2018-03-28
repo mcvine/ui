@@ -43,16 +43,16 @@ class Step(wiz.Step):
 class Step_SingleChoice(Step):
 
     header_text = None
-    choices = None
-    default_choice = None
+    def choices(self): raise NotImplementedError
+    def default_choice(self): return None
 
     def createHeader(self):
         return ipyw.HTML("<h3>%s</h3>" % self.header_text)
 
     def createBody(self):
-        self.select = ipyw.Dropdown(
-            options=self.choices,
-            value=self.default_choice or self.choices[0], description='Select')
+        choices = self.choices()
+        default = self.default_choice() or choices[0]
+        self.select = ipyw.Dropdown(options=choices, value=default, description='Select')
         self.body = ipyw.VBox(children=[self.select])
         return self.body
 

@@ -36,7 +36,7 @@ class DGS(FormFactory):
     # names must match parameters in "mcvine <instrument> beam" CLI
     parameters = [
         P(name='E', label="Nominal energy", widget=ipyw.Text("100."), converter=float),
-        P(name='ncount', label="Neutron count", widget=ipyw.Text("1e7"), converter=lambda x: int(float(x))),
+        P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
     ]
 
