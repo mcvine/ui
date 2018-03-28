@@ -7,8 +7,9 @@ import ipywe.fileselector
 import ipywe.wizard as wiz
 from .Form import FormFactory
 
+Context = wiz.Context
 
-class WizStep(wiz.Step):
+class Step(wiz.Step):
     body_layout = ipyw.Layout(border="1px solid lightgray", padding="10px", margin="10px 0px")
 
     def createPanel(self):
@@ -37,12 +38,13 @@ class WizStep(wiz.Step):
         self.status_bar.value = html
     
 
-class WizStep_SelectDir(WizStep):
+class Step_SelectDir(Step):
 
     header_text = None
     instruction = None
     context_attr_name = None
     target_name = None
+    newdir = False
 
     def start_dir(self): return
 
@@ -53,7 +55,7 @@ class WizStep_SelectDir(WizStep):
         self.select = ipywe.fileselector.FileSelectorPanel(
             instruction=self.instruction, start_dir=self.start_dir() or os.path.expanduser('~'),
             type='directory',
-            next=self.on_sel_dir, newdir_toolbar_button=False, stay_alive=True,
+            next=self.on_sel_dir, newdir_toolbar_button=self.newdir, stay_alive=True,
         )
         self.body = ipyw.VBox(children=[self.select.panel])
         return self.body

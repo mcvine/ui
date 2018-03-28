@@ -9,7 +9,7 @@ from ipywidgets import interact, interactive
 import ipywidgets as ipyw
 from IPython.display import display
 import ipywe.fileselector
-import ipywe.wizard as wiz
+from . import wizard as wiz
 from .Form import FormFactory
 
 def beam(context=None):
@@ -104,9 +104,7 @@ class HYSPEC(DGS):
             raise ValueError("Maximum incident energy should be larger than nominal energy")
 
 
-from .wizard import WizStep
-
-class Step0_Instrument(WizStep):
+class Step0_Instrument(wiz.Step):
 
     def createHeader(self):
         return ipyw.HTML("<h4>Choose instrument</h4>")
@@ -132,7 +130,7 @@ class Step0_Instrument(WizStep):
         next_step.show()
         return
                                                                             
-class Step1_Parameters(WizStep):
+class Step1_Parameters(wiz.Step):
 
     def createHeader(self):
         return ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
@@ -155,40 +153,19 @@ class Step1_Parameters(WizStep):
     def createNextStep(self):
         return Step2_Outdir(self.context)
 
-class Step2_Outdir(WizStep):
-    
-    def createBody(self):
-        self.select = ipywe.fileselector.FileSelectorPanel(
-            instruction='Select output directory', start_dir=os.path.expanduser('~'), type='directory',
-            next=self.on_sel_outdir, newdir_toolbar_button=True, stay_alive=True,
-        )
-        self.body = ipyw.VBox(children=[self.select.panel])
-        return self.body
 
-    def on_sel_outdir(self, selected):
-        self.context.outdir = selected
-        text = ipyw.HTML("<p>Selected output dir: %s</p>" % selected)
-        change_button = ipyw.Button(description="Change")
-        change_button.on_click(self.on_change_selection)
-        self.body.children=[text, change_button]
-        return
-
-    def on_change_selection(self, _):
-        self.body.children=[self.select.panel]
-        return
-
-    def validate(self):
-        good = hasattr(self.context, 'outdir') and self.context.outdir and os.path.exists(self.context.outdir) and os.path.isdir(self.context.outdir)
-        if not good:
-            self.updateStatusBar("Please select output directory")
-            return False
-        return True
+class Step2_Outdir(wiz.Step_SelectDir):
+    header_text = "Output directory"
+    instruction = 'Select output directory'
+    context_attr_name = 'outdir'
+    target_name = 'output'
+    newdir = True
     
     def createNextStep(self):
         return Step3_Confirm(self.context)
 
 
-class Step3_Confirm(WizStep):
+class Step3_Confirm(wiz.Step):
 
     def createHeader(self):
         return ipyw.HTML("<h4>Confirmation</h4>")
