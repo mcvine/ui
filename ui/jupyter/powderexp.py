@@ -50,7 +50,7 @@ class Step0_SelectBeam(wiz.Step_SelectDir):
 
     header_text = "Please select the directory where the simulated beam was saved"
     instruction = 'Select beam directory'
-    context_attr_name = 'beamdir'
+    context_attr_name = 'beam_dir'
     target_name = 'beam'
     def createNextStep(self):
         return Step1_Sample_selector(self.context)
@@ -135,13 +135,13 @@ class Step4_Confirm(wiz.Step):
         return ipyw.HTML("<h4>Confirmation</h4>")
     
     def createBody(self):
+        labels = ['Beam path', 'Sample path', 'Workding directory']
+        values = [self.context.beam_dir, self.context.sampleassembly_dir, self.context.work_dir]
         params = self.context.params
-        labels = []; values = []
         for k, v in params.items():
             labels.append(k)
             values.append(str(v))
             continue
-        labels.append("Working dir"); values.append(self.context.workdir)
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
@@ -155,7 +155,7 @@ class Step4_Confirm(wiz.Step):
     def nextStep(self):
         return self.generate()
     
-    def simulate(self):
+    def generate(self):
         params = self.context.params
         print (params)
         return
