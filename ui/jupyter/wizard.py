@@ -37,6 +37,41 @@ class Step(wiz.Step):
     def updateStatusBar(self, html):
         self.status_bar.value = html
     
+    pass
+
+
+class Step_SingleChoice(Step):
+
+    header_text = None
+    choices = None
+    default_choice = None
+
+    def createHeader(self):
+        return ipyw.HTML("<h3>%s</h3>" % self.header_text)
+
+    def createBody(self):
+        self.select = ipyw.Dropdown(
+            options=self.choices,
+            value=self.default_choice or self.choices[0], description='Select')
+        self.body = ipyw.VBox(children=[self.select])
+        return self.body
+
+    def validate(self):
+        return True
+    
+    def nextStep(self):
+        # need to overload this function, since the next step depends on
+        # the choice in this step
+        self.next_step = next_step = self.createNextStep()
+        next_step.previous_step = self
+        next_step.show()
+        return
+
+    def createNextStep(self):
+        raise NotImplementedError
+
+    pass
+
 
 class Step_SelectDir(Step):
 
@@ -70,6 +105,7 @@ class Step_SelectDir(Step):
 
     def on_change_selection(self, _):
         self.body.children=[self.select.panel]
+        self.updateStatusBar("")
         return
 
     def validate(self):
@@ -85,4 +121,4 @@ class Step_SelectDir(Step):
     def getSelectedDir(self):
         return getattr(self.context, self.context_attr_name)
     
-
+    pass
