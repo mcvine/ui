@@ -6,8 +6,33 @@ from IPython.display import display
 import ipywe.fileselector
 import ipywe.wizard as wiz
 from .Form import FormFactory
+import yaml
 
-Context = wiz.Context
+class Context(wiz.Context):
+    def iter_kvpairs(self):
+        "iterate over key,value pairs of my public attributes "
+        for k in self.__dict__:
+            if k.startswith('_'): continue
+            yield k, getattr(self, k)
+        return
+
+    def save(self, path):
+        d = {}
+        for k, v in self.iter_kvpairs():
+            d[k] = v
+            continue
+        with open(path, 'w') as outfile:
+            yaml.dump(d, outfile, default_flow_style=False)
+        return
+
+    def load(self, path):
+        d = yaml.load(open(path))
+        for k, v in d.items():
+            setattr(self, k, v)
+        return
+                
+    pass
+
 
 class Step(wiz.Step):
     body_layout = ipyw.Layout(border="1px solid lightgray", padding="10px", margin="10px 0px")
