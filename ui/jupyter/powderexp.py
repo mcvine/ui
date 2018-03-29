@@ -212,12 +212,12 @@ def create_project(
 def run(context):
     cmd = "cd %s; make" % context.work_dir
     status_file = os.path.join(context.work_dir, 'STATUS')
-    with open(status_file) as f: f.write('running')
+    with open(status_file, 'wt') as f: f.write('running')
     if os.system(cmd):
         status = "failed"
     else:
         status = 'finished'
-    with open(status_file) as f: f.write(status)
+    with open(status_file, 'wt') as f: f.write(status)
     notify(context.email, status, context)
     return
 
