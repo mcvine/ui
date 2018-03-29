@@ -3,8 +3,8 @@
 def test():
     from mcvine.ui.jupyter import powderexp
     powderexp.create_project()
-    powderexp.create_project(instrument_name='SEQUOIA', work='work-seq')
-    powderexp.create_project(instrument_name='CNCS', work='work-cncs')
+    powderexp.create_project(instrument_name='SEQUOIA', work_dir='work-seq')
+    powderexp.create_project(instrument_name='CNCS', work_dir='work-cncs')
     return
 
 

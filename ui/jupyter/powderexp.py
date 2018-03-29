@@ -120,7 +120,9 @@ class Step3_Sim_Params(wiz.Step):
         if not params:
             self.updateStatusBar("Please check your inputs")
             return False
-        self.context.params = params # save user input
+        # save user input
+        for k, v in params.items():
+            setattr(self.context, k, v)
         return True
     
     def createNextStep(self):
@@ -137,45 +139,58 @@ class Step4_Confirm(wiz.Step):
     def createBody(self):
         labels = ['Beam path', 'Sample path', 'Workding directory']
         values = [self.context.beam_dir, self.context.sampleassembly_dir, self.context.work_dir]
-        params = self.context.params
-        for k, v in params.items():
+        params = [p.name for p in SimFF.parameters]
+        for k in params:
             labels.append(k)
+            v = getattr(self.context, k)
             values.append(str(v))
             continue
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
-        panel = ipyw.VBox(children=[info])
+        #
         if os.listdir(self.context.work_dir):
-            self.confirm = ipyw.Checkbox(value=False, description="All files in %s will be deleted. Are you sure?" % self.context.work_dir)
+            self.confirm = ipyw.Checkbox(value=False, description="Removing all files in %s. Are you sure?" % self.context.work_dir)
+        else:
+            self.confirm = None
+        #
+        panel = ipyw.VBox(children=[info, self.confirm])
         return panel
 
     def validate(self):
-        return self.confirm.value
+        return self.confirm.value if self.confirm is not None else True
 
     def nextStep(self):
         return self.generate()
     
     def generate(self):
-        params = dict(self.context.params)
-        params.update(
-            beam=self.context.beam_dir,
-            sampleassembly=self.context.sampleassembly_dir,
-            work=self.context.work_dir,
-            )
-        print (params)
+        params = {}
+        for k,v in self.context.iter_kvpairs():
+            if k=='email': continue
+            params[k] = v
+        create_project(**params)
+        self.print_instructions()
         return
+
+    def print_instructions(self):
+        print(instructions.format(work=self.context.work_dir))
 
     pass
 
+
+instructions = """
+The simulation scripts and input files are now created in "{work}".
+Please examine the files and make modifications if you see fit.
+"""
+
 def create_project(
-        beam='beam', sampleassembly='sampleassembly', work='work',
+        beam_dir='beam', sampleassembly_dir='sampleassembly', work_dir='work',
         ncount=int(1e8), buffer_size=int(1e6), nodes=10,
         # Qaxis=[0.0, 15.0, 0.1],
         instrument_name='ARCS'):
     type = 'DGS'
-    work = os.path.abspath(work)
+    work = os.path.abspath(work_dir)
     import shutil
     if os.path.exists(work):
         shutil.rmtree(work)
@@ -187,11 +202,44 @@ def create_project(
         raise RuntimeError("%s failed" % cmd)
     # beam
     shutil.rmtree(os.path.join(work, 'beam'))
-    os.symlink(beam, os.path.join(work, 'beam'))
+    os.symlink(beam_dir, os.path.join(work, 'beam'))
     # sample
     shutil.rmtree(os.path.join(work, 'sampleassembly'))
-    os.symlink(sampleassembly, os.path.join(work, 'sampleassembly'))
+    os.symlink(sampleassembly_dir, os.path.join(work, 'sampleassembly'))
     return
 
+
+def run(context):
+    cmd = "cd %s; make" % context.work_dir
+    status_file = os.path.join(context.work_dir, 'STATUS')
+    with open(status_file) as f: f.write('running')
+    if os.system(cmd):
+        status = "failed"
+    else:
+        status = 'finished'
+    with open(status_file) as f: f.write(status)
+    notify(context.email, status, context)
+    return
+
+
+def notify(email, status, context):
+    params = context.__dict__
+    body = notifications[status].format(**params)
+    from .utils import sendmail
+    try:
+        sendmail(
+            "mcvine.neutron@gmail.com", email,
+            subject="mcvine simulation done", body=body
+            )
+    except Exception as e:
+        import warnings
+        warnings.warn(str(e))
+        return
+    return
+
+notifications = dict(
+    finished = "Your simulation of {instrument_name} powder experiment was finished in {work_dir}.",
+    failed = "Your simulation of {instrument_name} powder experiment failed in {work_dir}.",
+    )
 
 # End of file 
