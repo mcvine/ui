@@ -113,7 +113,7 @@ class Step_SelectDir(Step):
 
     def createBody(self):
         self.select = ipywe.fileselector.FileSelectorPanel(
-            instruction=self.instruction, start_dir=self.start_dir() or os.path.expanduser('~'),
+            instruction=self.instruction, start_dir=self.start_dir() or os.path.abspath("."),
             type='directory',
             next=self.on_sel_dir, newdir_toolbar_button=self.newdir, stay_alive=True,
         )
