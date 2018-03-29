@@ -103,7 +103,7 @@ class SimFF(FormFactory):
         P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
         P(name='buffer_size', label="Neutron buffer size", choices=["1e6", "1e7"], converter=lambda x: int(float(x))),
-        P(name='Qaxis', label="Qaxis (Qmin Qmax dQ). unit: inverse angstrom", widget=ipyw.Text("0 15 0.1"), converter=lambda x: map(float, x.split())),
+        # P(name='Qaxis', label="Qaxis (Qmin Qmax dQ). unit: inverse angstrom", widget=ipyw.Text("0 15 0.1"), converter=lambda x: map(float, x.split())),
     ]
 
 class Step3_Sim_Params(wiz.Step):
@@ -147,18 +147,51 @@ class Step4_Confirm(wiz.Step):
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
         panel = ipyw.VBox(children=[info])
+        if os.listdir(self.context.work_dir):
+            self.confirm = ipyw.Checkbox(value=False, description="All files in %s will be deleted. Are you sure?" % self.context.work_dir)
         return panel
 
     def validate(self):
-        return True
+        return self.confirm.value
 
     def nextStep(self):
         return self.generate()
     
     def generate(self):
-        params = self.context.params
+        params = dict(self.context.params)
+        params.update(
+            beam=self.context.beam_dir,
+            sampleassembly=self.context.sampleassembly_dir,
+            work=self.context.work_dir,
+            )
         print (params)
         return
+
+    pass
+
+def create_project(
+        beam='beam', sampleassembly='sampleassembly', work='work',
+        ncount=int(1e8), buffer_size=int(1e6), nodes=10,
+        # Qaxis=[0.0, 15.0, 0.1],
+        instrument_name='ARCS'):
+    type = 'DGS'
+    work = os.path.abspath(work)
+    import shutil
+    if os.path.exists(work):
+        shutil.rmtree(work)
+    cmd = 'mcvine workflow powder --type {type} --instrument {instrument_name} '
+    cmd += '--sample=V --workdir {work} --ncount {ncount} --buffer_size {buffer_size} '
+    cmd += '--nodes {nodes} '  # --qaxis "{Qaxis[0]} {Qaxis[1]} {Qaxis[2]}"'
+    cmd = cmd.format(**locals())
+    if os.system(cmd):
+        raise RuntimeError("%s failed" % cmd)
+    # beam
+    shutil.rmtree(os.path.join(work, 'beam'))
+    os.symlink(beam, os.path.join(work, 'beam'))
+    # sample
+    shutil.rmtree(os.path.join(work, 'sampleassembly'))
+    os.symlink(sampleassembly, os.path.join(work, 'sampleassembly'))
+    return
 
 
 # End of file 
