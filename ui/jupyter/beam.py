@@ -9,7 +9,7 @@ from ipywidgets import interact, interactive
 import ipywidgets as ipyw
 from IPython.display import display
 import ipywe.fileselector
-import ipywe.wizard as wiz
+from . import wizard as wiz
 from .Form import FormFactory
 
 def beam(context=None):
@@ -36,7 +36,7 @@ class DGS(FormFactory):
     # names must match parameters in "mcvine <instrument> beam" CLI
     parameters = [
         P(name='E', label="Nominal energy", widget=ipyw.Text("100."), converter=float),
-        P(name='ncount', label="Neutron count", widget=ipyw.Text("1e7"), converter=lambda x: int(float(x))),
+        P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
     ]
 
@@ -104,35 +104,15 @@ class HYSPEC(DGS):
             raise ValueError("Maximum incident energy should be larger than nominal energy")
 
 
-class WizStep(wiz.Step):
-    body_layout = ipyw.Layout(border="1px solid lightgray", padding="10px", margin="10px 0px")
+class Step0_Instrument(wiz.Step):
 
-    def createPanel(self):
-        body = self.createBody()
-        # unify layout
-        body.layout = self.body_layout
-        #
-        navigation = self.createNavigation()
-        #
-        status_bar = self.createStatusBar()
-        panel = ipyw.VBox(children=[body, navigation, status_bar])
-        return panel
-
-    def createStatusBar(self):
-        self.status_bar = ipyw.HTML("")
-        return self.status_bar
-
-    def updateStatusBar(self, html):
-        self.status_bar.value = html
-    
-
-class Step0_Instrument(WizStep):
+    def createHeader(self):
+        return ipyw.HTML("<h4>Choose instrument</h4>")
 
     def createBody(self):
-        self.title = title = ipyw.HTML("<h4>Choose instrument</h4>")
         self.select = ipyw.Dropdown(
             options=['ARCS', 'SEQUOIA', 'CNCS', "HYSPEC"], value='ARCS', description='Insturment:')
-        widgets= [self.title, self.select]
+        widgets= [self.select]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
@@ -150,13 +130,15 @@ class Step0_Instrument(WizStep):
         next_step.show()
         return
                                                                             
-class Step1_Parameters(WizStep):
+class Step1_Parameters(wiz.Step):
 
+    def createHeader(self):
+        return ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
+    
     def createBody(self):
         self.form_factory = eval(self.context.instrument)()
-        self.title = title = ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
         form = self.form_factory.createForm()
-        widgets= [title, form]
+        widgets= [form]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
@@ -171,43 +153,24 @@ class Step1_Parameters(WizStep):
     def createNextStep(self):
         return Step2_Outdir(self.context)
 
-class Step2_Outdir(WizStep):
-    
-    def createBody(self):
-        self.select = ipywe.fileselector.FileSelectorPanel(
-            instruction='Select output directory', start_dir=os.path.expanduser('~'), type='directory',
-            next=self.on_sel_outdir, newdir_toolbar_button=True, stay_alive=True,
-        )
-        self.body = ipyw.VBox(children=[self.select.panel])
-        return self.body
 
-    def on_sel_outdir(self, selected):
-        self.context.outdir = selected
-        text = ipyw.HTML("<p>Selected output dir: %s</p>" % selected)
-        change_button = ipyw.Button(description="Change")
-        change_button.on_click(self.on_change_selection)
-        self.body.children=[text, change_button]
-        return
-
-    def on_change_selection(self, _):
-        self.body.children=[self.select.panel]
-        return
-
-    def validate(self):
-        good = hasattr(self.context, 'outdir') and self.context.outdir and os.path.exists(self.context.outdir) and os.path.isdir(self.context.outdir)
-        if not good:
-            self.updateStatusBar("Please select output directory")
-            return False
-        return True
+class Step2_Outdir(wiz.Step_SelectDir):
+    header_text = "Output directory"
+    instruction = 'Select output directory'
+    context_attr_name = 'outdir'
+    target_name = 'output'
+    newdir = True
     
     def createNextStep(self):
         return Step3_Confirm(self.context)
 
 
-class Step3_Confirm(WizStep):
+class Step3_Confirm(wiz.Step):
 
+    def createHeader(self):
+        return ipyw.HTML("<h4>Confirmation</h4>")
+    
     def createBody(self):
-        title = ipyw.HTML("<h4>Confirmation</h4>")
         labels = ["Instrument"]; values = [self.context.instrument]
         params = self.context.params
         for k, v in params.items():
@@ -220,7 +183,7 @@ class Step3_Confirm(WizStep):
         self.dry_run = ipyw.Checkbox(value=True, description="Dry run")
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
-        panel = ipyw.VBox(children=[title, info, self.dry_run])
+        panel = ipyw.VBox(children=[info, self.dry_run])
         return panel
 
     def validate(self):
@@ -265,17 +228,5 @@ class Step3_Confirm(WizStep):
             return
         return
 
-
-# XXX customize input label width XXX
-from IPython.core.display import HTML
-from IPython.display import display
-display(HTML("""
-<style>
-.info.widget-box {
-  font-family: monospace;
-  background-color: #eee;
-}
-</style>
-"""))
 
 # End of file 
