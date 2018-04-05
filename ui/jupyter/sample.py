@@ -268,20 +268,55 @@ def validate_path(p):
     if isinstance(p, unicode): p = p.encode()
     return p
 
-def validate_range(qr):
-    qr = eval(qr)
-    min, max = map(float, qr)
-    return min, max
+def validate_range(unit):
+    def _to_q(v):
+        return '%s*%s' % (v, unit)
+    def _(qr):
+        qr = eval(qr)
+        qr = map(float, qr)
+        qr = map(_to_q, qr)
+        s =  ','.join(qr)
+        if isinstance(s, unicode):
+            s = s.encode()
+        return s
+    return _
 
 class Powdersqe(Excitation):
 
     P = FormFactory.P
     parameters = Excitation.parameters + [
         P(name='SQEhist', label="SQE histogram data file", widget=ipyw.Text("uniform-sqe.h5"), converter=validate_path),
-        P(name='Qrange', label='Q range. Express it as (Qmin, Qmax). Units: 1./angstrom', widget=ipyw.Text("0., 10."), converter=validate_range),
-        P(name='Erange', label='E range. Express it as (Emin, Emax). Units: 1./angstrom', widget=ipyw.Text("-50., 50."),  converter=validate_range),
+        P(name='Qrange', label='Q range. Express it as "Qmin, Qmax". Units: 1./angstrom', widget=ipyw.Text("0.05, 10."), converter=validate_range('1./angstrom')),
+        P(name='Erange', label='E range. Express it as "Emin, Emax". Units: meV', widget=ipyw.Text("-48., 48."),  converter=validate_range('meV')),
     ]
     
+    def crossCheckInputs(self):
+        inputs = self.inputs
+        path = inputs['SQEhist']
+        import histogram.hdf as hh
+        h = hh.load(path)
+        # Q
+        Q = h.Q
+        from pyre.units import parser; parser = parser()
+        Qmin, Qmax = parser.parse(inputs['Qrange'])
+        AA = parser.parse('angstrom')
+        Qmin, Qmax = Qmin*AA, Qmax*AA
+        if Qmin <= Q[0]:
+            raise ValueError("Qmin too small. should be larger than %s" % Q[0])
+        if Qmax >= Q[-1]:
+            raise ValueError("Qmax too large. should be less than %s" % Q[-1])
+        # E
+        E = getattr(h, 'E', None)
+        if E is None:
+            E = h.energy
+        Emin, Emax = parser.parse(inputs['Erange'])
+        meV = parser.parse('meV')
+        Emin, Emax = Emin/meV, Emax/meV
+        if Emin <= E[0]:
+            raise ValueError("Emin too small. should be larger than %s" % E[0])
+        if Emax >= E[-1]:
+            raise ValueError("Emax too large. should be less than %s" % E[-1])
+        return
 
 class Step5_Workdir(wiz.Step_SelectDir):
 
