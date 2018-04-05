@@ -82,6 +82,10 @@ class Lattice_abcabg(FormFactory):
 
     
 class Step2_Lattice_abcabg(wiz.Step):
+
+    header_text = 'Lattice parameters'
+    def createHeader(self):
+        return ipyw.HTML("<h3>%s</h3>" % self.header_text)
     
     def createBody(self):
         self.form_factory = Lattice_abcabg()
@@ -116,6 +120,10 @@ class Step3_ShapeType(wiz.Step_SingleChoice):
         return ['sphere', 'block', 'cylinder']
     def default_choice(self): return 'sphere'
 
+    header_text = 'Shape'
+    def createHeader(self):
+        return ipyw.HTML("<h3>%s</h3>" % self.header_text)
+    
     def validate(self):
         self.context.shape_type = self.select.value
         return True
@@ -153,7 +161,7 @@ class Step3a_ShapeConfig(wiz.Step):
         return True
     
     def createNextStep(self):
-        return Step4_Workdir(self.context)
+        return Step4_ExcitationType(self.context)
 
     pass
 
@@ -188,7 +196,89 @@ class Block(Shape):
     ]
     
 
-class Step4_Workdir(wiz.Step_SelectDir):
+
+# Excitation
+class Step4_ExcitationType(wiz.Step_SingleChoice):
+
+    def choices(self):
+        return ['powder_SQE']
+    def default_choice(self): return 'powder_SQE'
+
+    header_text = 'Excitation'
+    def createHeader(self):
+        return ipyw.HTML("<h3>%s</h3>" % self.header_text)
+    
+    def validate(self):
+        self.context.excitation_type = self.select.value
+        return True
+    
+    def nextStep(self):
+        # need to overload this function, since the next step depends on
+        # the choice in this step
+        self.next_step = next_step = self.createNextStep()
+        next_step.previous_step = self
+        next_step.show()
+        return
+                                                                            
+    def createNextStep(self):
+        return Step4a_ExcitationConfig(self.context)
+
+
+class Step4a_ExcitationConfig(wiz.Step):
+    
+    def createHeader(self):
+        return ipyw.HTML("<h4>%s configuration</h4>" % self.context.excitation_type)
+    
+    def createBody(self):
+        self.form_factory = eval(self.context.excitation_type.capitalize())()
+        form = self.form_factory.createForm()
+        widgets= [form]
+        return ipyw.VBox(children=widgets)
+
+    def validate(self):
+        params = self.form_factory.inputs
+        # check user input
+        if not params:
+            self.updateStatusBar("Please check your inputs")
+            return False
+        self.context.excitation_params = params # save user input
+        return True
+    
+    def createNextStep(self):
+        return Step5_Workdir(self.context)
+
+    pass
+
+
+class Excitation(FormFactory):
+
+    P = FormFactory.P
+    parameters = []
+
+def validate_path(p):
+    if not p:
+        raise ValueError("Empty")
+    p = os.path.abspath(p)
+    assert os.path.exists(p)
+    assert p.endswith('.h5')
+    return p
+
+def validate_range(qr):
+    qr = eval(qr)
+    min, max = map(float, qr)
+    return min, max
+
+class Powder_sqe(Excitation):
+
+    P = FormFactory.P
+    parameters = Excitation.parameters + [
+        P(name='SQEhist', label="SQE histogram data file", widget=ipyw.Text("uniform-sqe.h5"), converter=validate_path),
+        P(name='Qrange', label='Q range. Express it as (Qmin, Qmax). Units: 1./angstrom', widget=ipyw.Text("0., 10."), converter=validate_range),
+        P(name='Erange', label='E range. Express it as (Emin, Emax). Units: 1./angstrom', widget=ipyw.Text("-50., 50."),  converter=validate_range),
+    ]
+    
+
+class Step5_Workdir(wiz.Step_SelectDir):
 
     header_text = "Please select the directory where the sample will be saved"
     instruction = 'Select workding directory'
@@ -196,11 +286,11 @@ class Step4_Workdir(wiz.Step_SelectDir):
     target_name = 'work'
     newdir = True
     def createNextStep(self):
-        return Step5_Name(self.context)
+        return Step6_Name(self.context)
     pass
 
 
-class Step5_Name(wiz.Step):
+class Step6_Name(wiz.Step):
 
     header_text = "Name of the sample"
     
@@ -217,12 +307,12 @@ class Step5_Name(wiz.Step):
         return True
     
     def createNextStep(self):
-        return Step6_Confirmation(self.context)
+        return Step7_Confirmation(self.context)
 
     pass
 
 
-class Step6_Confirmation(wiz.Step):
+class Step7_Confirmation(wiz.Step):
 
     def createHeader(self):
         return ipyw.HTML("<h4>Confirmation</h4>")
@@ -248,7 +338,18 @@ class Step6_Confirmation(wiz.Step):
             layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         shape_info.add_class("info")
 
-        panel = ipyw.VBox(children=[info, shape_title, shape_info])
+        excitation_title = ipyw.HTML("<h4>Excitation: %s</h4>" % self.context.excitation_type)
+        excitation_params = self.context.excitation_params
+        labels = excitation_params.keys()
+        values = excitation_params.values()
+        labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
+        values_html = ipyw.HTML("\n".join("<p>%s</p>" % (l,) for l in values))        
+        excitation_info = ipyw.HBox(
+            children=[labels_html, values_html],
+            layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
+        excitation_info.add_class("info")
+
+        panel = ipyw.VBox(children=[info, shape_title, shape_info, excitation_title, excitation_info])
         return panel
 
     def validate(self):
