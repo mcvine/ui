@@ -33,6 +33,14 @@ class FormFactory:
     P = Parameter
     parameters = None # overload this with parameters in the form
 
+    """
+    ff = FormFactory()
+    form = ff.createForm()
+    frame = ipyw.VBox(children=[form])
+    
+    ff.inputs is a dictionary with all user inputs stored
+    """
+
     def __init__(self):
         self.inputs = dict()
         # gather parameters and establish a map from name to parameter
