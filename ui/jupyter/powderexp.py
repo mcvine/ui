@@ -17,10 +17,7 @@
 
 from __future__ import print_function
 import os
-from ipywidgets import interact, interactive
 import ipywidgets as ipyw
-from IPython.display import display
-import ipywe.fileselector
 from . import wizard as wiz
 from .Form import FormFactory
 
