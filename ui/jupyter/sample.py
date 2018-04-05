@@ -61,6 +61,7 @@ class Step1_Chemical_formula(wiz.Step):
         if not len(formula):
             self.updateStatusBar("Empty formula\n")
             return False
+        self.context.chemical_formula = ''.join('%s%s' % (k,v) for k,v in formula.items())
         return True
     
     def createNextStep(self):
@@ -95,8 +96,12 @@ class Step2_Lattice_abcabg(wiz.Step):
             self.updateStatusBar("Please check your inputs")
             return False
         # save user input
+        class lattice:
+            def __str__(self): return "%s,%s,%s; %s,%s,%s" % (
+                    self.a, self.b, self.c, self.alpha, self.beta, self.gamma)
+        self.context.lattice = lattice()
         for k, v in params.items():
-            setattr(self.context, k, v)
+            setattr(self.context.lattice, k, v)
         return True
     
     def createNextStep(self):
@@ -144,7 +149,7 @@ class Step3a_ShapeConfig(wiz.Step):
         if not params:
             self.updateStatusBar("Please check your inputs")
             return False
-        self.context.params = params # save user input
+        self.context.shape_params = params # save user input
         return True
     
     def createNextStep(self):
@@ -223,15 +228,27 @@ class Step6_Confirmation(wiz.Step):
         return ipyw.HTML("<h4>Confirmation</h4>")
     
     def createBody(self):
-        labels = ['name']
-        values = [self.context.name]
+        labels = ['name', 'chemical_formula', 'lattice', 'directory']
+        values = [self.context.name, self.context.chemical_formula, str(self.context.lattice), self.context.work_dir]
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         info = ipyw.HBox(
             children=[labels_html, values_html],
             layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
-        panel = ipyw.VBox(children=[info])
+
+        shape_title = ipyw.HTML("<h4>Shape: %s</h4>" % self.context.shape_type)
+        shape_params = self.context.shape_params
+        labels = shape_params.keys()
+        values = shape_params.values()
+        labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
+        values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))        
+        shape_info = ipyw.HBox(
+            children=[labels_html, values_html],
+            layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
+        shape_info.add_class("info")
+
+        panel = ipyw.VBox(children=[info, shape_title, shape_info])
         return panel
 
     def validate(self):
