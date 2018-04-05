@@ -6,7 +6,7 @@
 
 """
 * Choose beam directory
-* Choose sample directory
+* Choose sample yaml file
 * Choose work directory
 * Choose simulation parameters
   - ncount
@@ -59,19 +59,26 @@ class Step0_SelectBeam(wiz.Step_SelectDir):
         return True
             
 
-class Step1_Sample_selector(wiz.Step_SelectDir):
-    header_text = "Please select the directory where a sample assembly was saved"
-    instruction = 'Select sample assembly directory'
-    context_attr_name = 'sampleassembly_dir'
-    target_name = 'sample-assembly'
+class Step1_Sample_selector(wiz.Step_SelectFile):
+    header_text = "Please select the yaml file for the sample"
+    instruction = 'Select sample'
+    context_attr_name = 'sample_yaml'
+    target_name = 'sample yaml'
     def createNextStep(self):
         return Step2_Workdir(self.context)
     def validate(self):
         if not super(Step1_Sample_selector, self).validate(): return False
-        dir = self.getSelectedDir()
-        if not os.path.exists(os.path.join(dir, 'sampleassembly.xml')):
-            self.updateStatusBar("%s: missing 'sampleassembly.xml'"%dir)
-            return False        
+        path = self.getSelectedFile()
+        if not os.path.exists(path):
+            self.updateStatusBar("%s: does not exist"%path)
+            return False
+        from mcvine.workflow.sample import loadSampleYml
+        try:
+            sample = loadSampleYml(path)
+        except Exception as exc:
+            self.updateStatusBar("Failed to load sample from %r: \n%s"%(path, exc))
+            return False
+        self.context.sample_yaml = path
         return True
     pass
 
@@ -131,7 +138,7 @@ class Step4_Confirm(wiz.Step):
     
     def createBody(self):
         labels = ['Beam path', 'Sample path', 'Workding directory']
-        values = [self.context.beam_dir, self.context.sampleassembly_dir, self.context.work_dir]
+        values = [self.context.beam_dir, self.context.sample_yaml, self.context.work_dir]
         params = [p.name for p in SimFF.parameters]
         for k in params:
             labels.append(k)
@@ -178,7 +185,7 @@ Please examine the files and make modifications if you see fit.
 """
 
 def create_project(
-        beam_dir='beam', sampleassembly_dir='sampleassembly', work_dir='work',
+        beam_dir='beam', sample_yaml='sample.yaml', work_dir='work',
         ncount=int(1e8), buffer_size=int(1e6), nodes=10,
         # Qaxis=[0.0, 15.0, 0.1],
         instrument_name='ARCS'):
@@ -197,8 +204,12 @@ def create_project(
     shutil.rmtree(os.path.join(work, 'beam'))
     os.symlink(beam_dir, os.path.join(work, 'beam'))
     # sample
-    shutil.rmtree(os.path.join(work, 'sampleassembly'))
-    os.symlink(sampleassembly_dir, os.path.join(work, 'sampleassembly'))
+    sa_dir = os.path.join(work, 'sampleassembly')
+    shutil.rmtree(sa_dir)
+    from mcvine.workflow.sample import loadSampleYml
+    sample = loadSampleYml(sample_yaml)
+    from mcvine.workflow.sampleassembly.scaffolding import createSampleAssembly
+    createSampleAssembly(sa_dir, sample)
     return
 
 
