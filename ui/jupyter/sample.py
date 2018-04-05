@@ -61,7 +61,9 @@ class Step1_Chemical_formula(wiz.Step):
         if not len(formula):
             self.updateStatusBar("Empty formula\n")
             return False
-        self.context.chemical_formula = ''.join('%s%s' % (k,v) for k,v in formula.items())
+        s = ''.join('%s%s' % (k,v) for k,v in formula.items())
+        if isinstance(s, unicode): s = s.encode()
+        self.context.chemical_formula = s
         return True
     
     def createNextStep(self):
@@ -101,8 +103,10 @@ class Step2_Lattice_abcabg(wiz.Step):
             return False
         # save user input
         class lattice:
-            def __str__(self): return "%s,%s,%s; %s,%s,%s" % (
-                    self.a, self.b, self.c, self.alpha, self.beta, self.gamma)
+            def totuple(self):
+                return (self.a, self.b, self.c, self.alpha, self.beta, self.gamma)
+            def __str__(self): return "%s,%s,%s; %s,%s,%s" % self.totuple()
+            pass
         self.context.lattice = lattice()
         for k, v in params.items():
             setattr(self.context.lattice, k, v)
@@ -175,24 +179,24 @@ class Sphere(Shape):
 
     P = FormFactory.P
     parameters = Shape.parameters + [
-        P(name='radius', label="radius", widget=ipyw.Text("1.*cm")),
+        P(name='radius', label="radius", widget=ipyw.Text("1.*cm"), converter=str),
     ]
     
 class Cylinder(Shape):
 
     P = FormFactory.P
     parameters = Shape.parameters + [
-        P(name='radius', label="radius", widget=ipyw.Text("1.*cm")),
-        P(name='height', label="height", widget=ipyw.Text("5.*cm")),
+        P(name='radius', label="radius", widget=ipyw.Text("1.*cm"), converter=str),
+        P(name='height', label="height", widget=ipyw.Text("5.*cm"), converter=str),
     ]
     
 class Block(Shape):
 
     P = FormFactory.P
     parameters = Shape.parameters + [
-        P(name='width', label="width", widget=ipyw.Text("1.*cm")),
-        P(name='height', label="height", widget=ipyw.Text("1.*cm")),
-        P(name='thickness', label="thickness", widget=ipyw.Text("1.*cm")),
+        P(name='width', label="width", widget=ipyw.Text("1.*cm"), converter=str),
+        P(name='height', label="height", widget=ipyw.Text("1.*cm"), converter=str),
+        P(name='thickness', label="thickness", widget=ipyw.Text("1.*cm"), converter=str),
     ]
     
 
@@ -201,8 +205,8 @@ class Block(Shape):
 class Step4_ExcitationType(wiz.Step_SingleChoice):
 
     def choices(self):
-        return ['powder_SQE']
-    def default_choice(self): return 'powder_SQE'
+        return ['powderSQE']
+    def default_choice(self): return 'powderSQE'
 
     header_text = 'Excitation'
     def createHeader(self):
@@ -261,6 +265,7 @@ def validate_path(p):
     p = os.path.abspath(p)
     assert os.path.exists(p)
     assert p.endswith('.h5')
+    if isinstance(p, unicode): p = p.encode()
     return p
 
 def validate_range(qr):
@@ -268,7 +273,7 @@ def validate_range(qr):
     min, max = map(float, qr)
     return min, max
 
-class Powder_sqe(Excitation):
+class Powdersqe(Excitation):
 
     P = FormFactory.P
     parameters = Excitation.parameters + [
@@ -303,7 +308,9 @@ class Step6_Name(wiz.Step):
         return self.body
 
     def validate(self):
-        self.context.name = self.text.value
+        v = self.text.value
+        if isinstance(v, unicode): v = v.encode()
+        self.context.name = v
         return True
     
     def createNextStep(self):
@@ -359,6 +366,31 @@ class Step7_Confirmation(wiz.Step):
         return self.generate()
     
     def generate(self):
+        c = self.context
+        from danse.ins.matter import Lattice
+        lattice_constants = c.lattice.totuple()
+        lattice = Lattice(*lattice_constants)
+        base = [','.join(list(map(str, v))) for v in lattice.base]
+        lattice = dict(
+            constants = ','.join(map(str, lattice_constants)),
+            basis_vectors = base,
+            )
+        excitation = dict(type = c.excitation_type)
+        excitation.update(c.excitation_params)
+        shape = {c.shape_type: c.shape_params}
+        d = dict(
+            name = c.name,
+            chemical_formula = c.chemical_formula,
+            lattice = lattice,
+            excitation = excitation,
+            shape = shape,
+            temperature = '300*K',
+            )
+        path = os.path.join(c.work_dir, c.name+'.yaml')
+        print("writing to %s" % path)
+        import yaml
+        with open(path, 'w') as outfile:
+            yaml.dump(d, outfile, default_flow_style=False)
         return
 
     pass
