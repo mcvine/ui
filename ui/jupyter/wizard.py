@@ -147,3 +147,53 @@ class Step_SelectDir(Step):
         return getattr(self.context, self.context_attr_name)
     
     pass
+
+
+class Step_SelectFile(Step):
+
+    header_text = None
+    instruction = None
+    context_attr_name = None
+    target_name = None
+
+    def start_dir(self): return
+
+    def createHeader(self):
+        return ipyw.HTML("<h3>%s</h3>" % self.header_text)
+
+    def createBody(self):
+        self.select = ipywe.fileselector.FileSelectorPanel(
+            instruction=self.instruction, start_dir=self.start_dir() or os.path.abspath("."),
+            type='file',
+            next=self.on_sel_dir, newdir_toolbar_button=False, stay_alive=True,
+        )
+        self.body = ipyw.VBox(children=[self.select.panel])
+        return self.body
+
+    def on_sel_dir(self, selected):
+        setattr(self.context, self.context_attr_name, selected)
+        text = ipyw.HTML("<p>Selected file: %s</p>" % selected)
+        change_button = ipyw.Button(description="Change")
+        change_button.on_click(self.on_change_selection)
+        self.body.children=[text, change_button]
+        return
+
+    def on_change_selection(self, _):
+        self.body.children=[self.select.panel]
+        self.updateStatusBar("")
+        return
+
+    def validate(self):
+        good = hasattr(self.context, self.context_attr_name)
+        if good:
+            v = getattr(self.context, self.context_attr_name)
+            good = v and os.path.exists(v) and os.path.isfile(v)
+        if not good:
+            self.updateStatusBar("Please select %s file" % self.target_name)
+            return False
+        return True
+
+    def getSelectedFile(self):
+        return getattr(self.context, self.context_attr_name)
+    
+    pass
