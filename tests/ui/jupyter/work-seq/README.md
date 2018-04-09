@@ -1,1 +1,0 @@
-Template simulation directory for powder DGS virtual experiment.
