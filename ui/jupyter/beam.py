@@ -187,43 +187,48 @@ class Step3_Confirm(wiz.Step):
         return True
 
     def nextStep(self):
-        return self.simulate(self.dry_run.value)
+        return simulate(self.context, self.dry_run.value)
     
-    def simulate(self, dry_run=False):
-        params = self.context.params
-        cmd = 'cd ' + self.context.outdir + '; mcvine instruments ' + self.context.instrument.lower() + " beam"
-        for k, v in params.items(): cmd += ' --%s=%r' % (k,v)
-        logout = "%s/log.sim" % self.context.outdir
-        cmd += ">%s 2>&1" % logout
-        if dry_run:
-            print("** This is a dry run.")
-            print("** The following command will be run if it is not a dry run")
-            print("")
-            print(' '*4 + cmd)
-            status = "dry-run"
-        else:
-            print("* Running simulation at %s..." % self.context.outdir)
-            print("  -- Cmd: %s" % cmd)
-            print("  -- Please wait...")
-            rt = os.system(cmd)
-            status = "failed" if rt else "succeeded"
-            print("* Your simulation %s" % status)
-            #
-            print("  -- Logging of simulation is available at %s" % logout)
-        # email
-        body="Simulation of %s beam %s. Please check log file %s" % (
-            self.context.instrument, status, logout)
-        from .utils import sendmail
-        try:
-            sendmail(
-                "mcvine.neutron@gmail.com", self.context.email,
-                subject="mcvine simulation done", body=body
-                )
-        except Exception as e:
-            import warnings
-            warnings.warn(str(e))
-            return
-        return
 
+def simulate(context, dry_run=False):
+    params = context.params
+    cmd = 'cd ' + context.outdir + '; mcvine instruments ' + context.instrument.lower() + " beam"
+    for k, v in params.items(): cmd += ' --%s=%r' % (k,v)
+    logout = "%s/log.sim" % context.outdir
+    cmd += ">%s 2>&1" % logout
+    context.cmd = cmd
+    if dry_run:
+        BOLD = '\033[1m'
+        UNBOLD = '\033[0m'
+        print("** %sThis is a dry run.%s" % (BOLD, UNBOLD))
+        print("** The following command will be run if it is not a dry run")
+        print("")
+        print(' '*4 + cmd)
+        status = "dry-run"
+        print('\n')
+    else:
+        print("* Running simulation at %s..." % context.outdir)
+        print("  -- Cmd: %s" % cmd)
+        print("  -- Please wait...")
+        rt = os.system(cmd)
+        status = "failed" if rt else "succeeded"
+        print("* Your simulation %s" % status)
+        #
+        print("  -- Logging of simulation is available at %s" % logout)
+    # email
+    body="Simulation of %s beam %s. Please check log file %s" % (
+        context.instrument, status, logout)
+    from .utils import sendmail
+    try:
+        sendmail(
+            "mcvine.neutron@gmail.com", context.email,
+            subject="mcvine simulation done", body=body
+            )
+    except Exception as e:
+        import warnings
+        warnings.warn(str(e))
+        return
+    return
+    
 
 # End of file 
