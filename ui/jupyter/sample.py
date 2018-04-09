@@ -21,6 +21,9 @@ import os
 import ipywidgets as ipyw
 from . import wizard as wiz
 from .Form import FormFactory
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 def sample(context=None):
     context = context or wiz.Context()
@@ -323,14 +326,16 @@ class Powdersqe(Excitation):
 
     def createHelpText(self):
         return ipyw.HTML("""<div>
+<h5>Note</h5>
 <p>
 * SQE histogram data file: please specify the path to the SQE histogram. 
-</p>
-<p>
 To see how to create such a histogram, please refer to 
 <a href="https://github.com/mcvine/ui/wiki/Create-a-powder-S(Q,E)-histogram-file">Create a powder SQE histogram</a>
 <p>
-</div>""")
+
+</div>
+<hr>
+""")
 
 class Step5_Workdir(wiz.Step_SelectDir):
 
