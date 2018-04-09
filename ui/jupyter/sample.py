@@ -322,10 +322,15 @@ class Powdersqe(Excitation):
         return
 
     def createHelpText(self):
-        return ipyw.HTML("""<pre>
+        return ipyw.HTML("""<div>
+<p>
 * SQE histogram data file: please specify the path to the SQE histogram. 
-  To see how to create such a histogram, please refer to https://github.com/mcvine/ui/wiki/Create-a-powder-S(Q,E)-histogram-file
-</pre>""")
+</p>
+<p>
+To see how to create such a histogram, please refer to 
+<a href="https://github.com/mcvine/ui/wiki/Create-a-powder-S(Q,E)-histogram-file">Create a powder SQE histogram</a>
+<p>
+</div>""")
 
 class Step5_Workdir(wiz.Step_SelectDir):
 
