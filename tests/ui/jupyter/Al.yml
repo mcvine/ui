@@ -1,0 +1,15 @@
+name: Al
+chemical_formula: Al4
+lattice: 
+ constants: 4.046, 4.046, 4.046, 90, 90, 90
+ basis_vectors:
+  - 4.046, 0, 0
+  - 0, 4.046, 0
+  - 0, 0, 4.046
+excitations:
+ - type: powderSQE
+   SQEhist: Al-iqe.h5
+   Qrange: 0./angstrom, 10./angstrom
+   Erange: -45.*meV, 45*meV
+shape: hollowCylinder in_radius="5./8*inch" out_radius="1.*inch" height="1.5*inch"
+temperature: 300*K
