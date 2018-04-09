@@ -235,8 +235,9 @@ class Step4a_ExcitationConfig(wiz.Step):
     
     def createBody(self):
         self.form_factory = eval(self.context.excitation_type.capitalize())()
+        doc = self.form_factory.createHelpText()
         form = self.form_factory.createForm()
-        widgets= [form]
+        widgets= [doc, form]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
@@ -258,6 +259,8 @@ class Excitation(FormFactory):
 
     P = FormFactory.P
     parameters = []
+
+    def createHelpText(self): raise NotImplementedError
 
 def validate_path(p):
     if not p:
@@ -317,6 +320,12 @@ class Powdersqe(Excitation):
         if Emax >= E[-1]:
             raise ValueError("Emax too large. should be less than %s" % E[-1])
         return
+
+    def createHelpText(self):
+        return ipyw.HTML("""<pre>
+* SQE histogram data file: please specify the path to the SQE histogram. 
+  To see how to create such a histogram, please refer to https://github.com/mcvine/ui/wiki/Create-a-powder-S(Q,E)-histogram-file
+</pre>""")
 
 class Step5_Workdir(wiz.Step_SelectDir):
 
