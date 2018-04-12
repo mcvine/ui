@@ -221,31 +221,36 @@ def simulate(context, dry_run=False):
         print("** The following command will be run if it is not a dry run")
         print("")
         print(' '*4 + cmd)
-        status = "dry-run"
+        status = "dry_run"
         print('\n')
     else:
         print("* Running simulation at %s..." % context.outdir)
         print("  -- Cmd: %s" % cmd)
         print("  -- Please wait...")
+        # email
+        status = 'running'; notify(context.email, status, context)
         rt = os.system(cmd)
         status = "failed" if rt else "succeeded"
         print("* Your simulation %s" % status)
         #
         print("  -- Logging of simulation is available at %s" % logout)
     # email
-    body="Simulation of %s beam %s. Please check log file %s" % (
-        context.instrument, status, logout)
-    from .utils import sendmail
-    try:
-        sendmail(
-            "mcvine.neutron@gmail.com", context.email,
-            subject="mcvine simulation done", body=body
-            )
-    except Exception as e:
-        import warnings
-        warnings.warn(str(e))
-        return
+    notify(context.email, status, context)
     return
     
+
+def notify(email, status, context):
+    params = context.__dict__
+    body = notifications[status].format(**params)
+    from .utils import notify
+    notify(email, 'mcvine simulation %s' % status, params, notifications[status])
+    return
+
+notifications = dict(
+    dry_run = "Dry-run: simulation of {instrument} beam.",
+    succeeded = "Your simulation of {instrument} beam finished successfully in {outdir}.",
+    failed = "Your simulation of {instrument} beam failed in {outdir}.",
+    running = "Your simulation of {instrument} beam is now running in {outdir}.",
+    )
 
 # End of file 

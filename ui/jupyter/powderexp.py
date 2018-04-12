@@ -222,6 +222,8 @@ def run(context):
     cmd = "cd %s; make" % context.work_dir
     status_file = os.path.join(context.work_dir, 'STATUS')
     with open(status_file, 'wt') as f: f.write('running')
+    status = 'running'
+    notify(context.email, status, context)
     if os.system(cmd):
         status = "failed"
     else:
@@ -234,21 +236,14 @@ def run(context):
 def notify(email, status, context):
     params = context.__dict__
     body = notifications[status].format(**params)
-    from .utils import sendmail
-    try:
-        sendmail(
-            "mcvine.neutron@gmail.com", email,
-            subject="mcvine simulation done", body=body
-            )
-    except Exception as e:
-        import warnings
-        warnings.warn(str(e))
-        return
+    from .utils import notify
+    notify(email, 'mcvine simulation %s' % status, params, notifications[status])
     return
 
 notifications = dict(
     finished = "Your simulation of {instrument_name} powder experiment was finished in {work_dir}.",
     failed = "Your simulation of {instrument_name} powder experiment failed in {work_dir}.",
+    running = "Your simulation of {instrument_name} powder experiment is now running in {work_dir}.",
     )
 
 # End of file 
