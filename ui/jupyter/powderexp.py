@@ -241,9 +241,9 @@ def notify(email, status, context):
     return
 
 notifications = dict(
-    finished = "Your simulation of {instrument_name} powder experiment was finished in {work_dir}.",
-    failed = "Your simulation of {instrument_name} powder experiment failed in {work_dir}.",
-    running = "Your simulation of {instrument_name} powder experiment is now running in {work_dir}.",
+    finished = 'Your simulation of "{instrument_name}" powder experiment was finished in "{work_dir}".',
+    failed = 'Your simulation of "{instrument_name}" powder experiment failed in "{work_dir}".',
+    running = 'Your simulation of "{instrument_name}" powder experiment is now running in "{work_dir}".',
     )
 
 # End of file 

@@ -247,10 +247,10 @@ def notify(email, status, context):
     return
 
 notifications = dict(
-    dry_run = "Dry-run: simulation of {instrument} beam.",
-    succeeded = "Your simulation of {instrument} beam finished successfully in {outdir}.",
-    failed = "Your simulation of {instrument} beam failed in {outdir}.",
-    running = "Your simulation of {instrument} beam is now running in {outdir}.",
+    dry_run = 'Dry-run: simulation of "{instrument}" beam.',
+    succeeded = 'Your simulation of "{instrument}" beam finished successfully in "{outdir}".',
+    failed = 'Your simulation of "{instrument}" beam failed in "{outdir}".',
+    running = 'Your simulation of "{instrument}" beam is now running in "{outdir}".',
     )
 
 # End of file 
