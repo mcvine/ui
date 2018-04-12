@@ -177,17 +177,34 @@ class Step3_Confirm(wiz.Step):
         labels.append("Output dir"); values.append(self.context.outdir)
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
-        self.dry_run = ipyw.Checkbox(value=True, description="Dry run")
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
-        panel = ipyw.VBox(children=[info, self.dry_run])
+        self.confirm = ipyw.Checkbox(value=False, description="Everything is good. Run simulation")
+        widgets = [info, self.confirm]
+        #
+        if os.listdir(self.context.outdir):
+            self.confirm_rmtree = ipyw.Checkbox(value=False, description="Removing all files in %s. Are you sure?" % self.context.outdir)
+            widgets.append(self.confirm_rmtree)
+        else:
+            self.confirm_rmtree = None
+        panel = ipyw.VBox(children=widgets)
         return panel
 
     def validate(self):
+        if not self.confirm.value:
+            return False # not confirmed, cannot proceed
+        if self.confirm_rmtree is not None:
+            # directory is not empty
+            if not self.confirm_rmtree.value: return False # not confirmed to remove everything, cannot proceed
+            # remove everything
+            import shutil
+            shutil.rmtree(self.context.outdir)
+            # create the empty dir
+            os.makedirs(self.context.outdir)
         return True
 
     def nextStep(self):
-        return simulate(self.context, self.dry_run.value)
+        return simulate(self.context)
     
 
 def simulate(context, dry_run=False):
