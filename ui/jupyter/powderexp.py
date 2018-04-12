@@ -107,6 +107,9 @@ class SimFF(FormFactory):
     ]
 
 class Step3_Sim_Params(wiz.Step):
+
+    def createHeader(self):
+        return ipyw.HTML("<h4>Simulation parameters</h4>")
     
     def createBody(self):
         self.form_factory = SimFF()
@@ -149,13 +152,15 @@ class Step4_Confirm(wiz.Step):
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
+        widgets = [info]
         #
         if os.listdir(self.context.work_dir):
             self.confirm = ipyw.Checkbox(value=False, description="Removing all files in %s. Are you sure?" % self.context.work_dir)
+            widgets.append(self.confirm)
         else:
             self.confirm = None
         #
-        panel = ipyw.VBox(children=[info, self.confirm])
+        panel = ipyw.VBox(children=widgets)
         return panel
 
     def validate(self):
