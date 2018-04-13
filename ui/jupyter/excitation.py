@@ -166,6 +166,8 @@ class Powdersqe(Excitation):
 
     def createHelpText(self):
         return ipyw.HTML("""<div>
+Click <a target="_blank" href="https://github.com/mcvine/ui/wiki/Powder-SQE-kernel">here</a>
+for more details on the parameters.
 </div>
 """)
 
