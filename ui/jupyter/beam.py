@@ -36,6 +36,12 @@ class DGS(FormFactory):
         P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
     ]
+    
+    def createHelpText(self):
+        return ipyw.HTML("""<div>
+Click <a target="_blank" href="https://github.com/mcvine/ui/wiki/DGS-instrument-beam-simulation-parameters">here</a> for explanations
+of parameters.
+</div>""")
 
 
 class ARCS(DGS):
@@ -45,7 +51,7 @@ class ARCS(DGS):
         P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
-        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
+        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "90.", "120."], converter=float),
         P(name="with_moderator_angling", default=True),
     ]
     
@@ -57,7 +63,7 @@ class SEQUOIA(DGS):
         P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
-        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "120."], converter=float),
+        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "90.", "120."], converter=float),
     ]
 
 
@@ -134,8 +140,9 @@ class Step1_Parameters(wiz.Step):
     
     def createBody(self):
         self.form_factory = eval(self.context.instrument)()
+        doc = self.form_factory.createHelpText()
         form = self.form_factory.createForm()
-        widgets= [form]
+        widgets= [doc, form]
         return ipyw.VBox(children=widgets)
 
     def validate(self):
