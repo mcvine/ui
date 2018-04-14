@@ -45,6 +45,13 @@ class Step0_SelectBeam(wiz.Step_SelectDir):
     instruction = 'Select beam directory'
     context_attr_name = 'beam_dir'
     target_name = 'beam'
+    def createHeader(self):
+        text = "<h3>%s</h3>" % self.header_text
+        text += """<div>
+Beam can be simulated using <a href="./DGS-beam.ipynb" target="_blank">this notebook</a>
+</div>
+"""
+        return ipyw.HTML(text)
     def createNextStep(self):
         return Step1_Sample_selector(self.context)
     def validate(self):
@@ -64,6 +71,13 @@ class Step1_Sample_selector(wiz.Step_SelectFile):
     instruction = 'Select sample'
     context_attr_name = 'sample_yaml'
     target_name = 'sample yaml'
+    def createHeader(self):
+        text = "<h3>%s</h3>" % self.header_text
+        text += """<div>
+A sample can be create using <a href="./Create a sample.ipynb" target="_blank">this notebook</a>
+</div>
+"""
+        return ipyw.HTML(text)
     def createNextStep(self):
         return Step2_Workdir(self.context)
     def validate(self):
@@ -84,7 +98,7 @@ class Step1_Sample_selector(wiz.Step_SelectFile):
 
 
 class Step2_Workdir(wiz.Step_SelectDir):
-    header_text = "Please select the workding directory for your simulation"
+    header_text = "Please select the working directory for your simulation"
     instruction = 'Select working directory'
     context_attr_name = 'work_dir'
     target_name = 'working'
@@ -140,7 +154,7 @@ class Step4_Confirm(wiz.Step):
         return ipyw.HTML("<h4>Confirmation</h4>")
     
     def createBody(self):
-        labels = ['Beam path', 'Sample path', 'Workding directory']
+        labels = ['Beam path', 'Sample path', 'Working directory']
         values = [self.context.beam_dir, self.context.sample_yaml, self.context.work_dir]
         params = [p.name for p in SimFF.parameters]
         for k in params:
@@ -150,7 +164,8 @@ class Step4_Confirm(wiz.Step):
             continue
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
-        info = ipyw.HBox(children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
+        info = ipyw.HBox(
+            children=[labels_html, values_html], layout=ipyw.Layout(padding="5px", border="1px inset #eee"))
         info.add_class("info")
         widgets = [info]
         #
