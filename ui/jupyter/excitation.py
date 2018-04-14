@@ -90,6 +90,8 @@ class Step4a_ExcitationConfig(wiz.Step):
         if not params:
             self.updateStatusBar("Please check your inputs")
             return False
+        if not hasattr(self.context, 'excitation_params'):
+            self.context.excitation_params = dict()
         self.context.excitation_params.update(params) # save user input
         return True
     
@@ -116,7 +118,7 @@ class Excitation(FormFactory):
     pass
 
 
-from .excitations import powderSQE, phonon_powder_incoherent
-excitation_types = ['powderSQE', 'phonon_powder_incoherent']
+from .excitations import powderSQE, phonon_powder_incoherent, powder_analytical_dispersion
+excitation_types = ['powderSQE', 'phonon_powder_incoherent', 'powder_analytical_dispersion']
 
 # End of file 
