@@ -4,7 +4,8 @@
 #
 
 from __future__ import print_function
-from ipywidgets import interact, interactive
+from ipywidgets import interact, interactive, interactive_output
+import ipywidgets as ipyw
 import collections
 
 class Parameter:
@@ -51,13 +52,29 @@ class FormFactory:
         # For any duplicates, the later defines override the earlier ones
         return
     
-    def createForm(self):
+    def createForm(self, preserve_order=False):
         kwds = dict()
+        if preserve_order:
+            widgets = []
+            labels = []
         for p in self.parameters:
-            v = p.widget or p.choices or p.range or p.default or p.value
-            kwds[p.label or p.name] = v
+            if preserve_order:
+                w = p.widget
+                if w is None: raise RuntimeError("To preserve order, widget must be defined for each input")
+                widgets.append(w)
+                kwds[p.label or p.name] = w
+                labels.append( ipyw.Label(value = p.label or p.name) )
+            else:
+                v = p.widget or p.choices or p.range or p.default or p.value
+                kwds[p.label or p.name] = v
             continue
-        form = interactive(self.acceptInputs, **kwds)
+        if preserve_order:
+            left = ipyw.VBox(labels)
+            right = ipyw.VBox(widgets)
+            form = ipyw.HBox([left, right])
+            self.form_output = interactive_output(self.acceptInputs, kwds)
+        else:
+            form = interactive(self.acceptInputs, **kwds)
         form.add_class("wide-inputs") # allow customized css below
         return form
 
