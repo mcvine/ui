@@ -69,13 +69,11 @@ class ConfigStart(wiz.Step_SelectFile):
     def createHeader(self):
         text = "<h3>%s</h3>" % self.header_text
         text += """
-<hr>
 <p>
 * SQE histogram data file: please specify the path to the SQE histogram.
   To see how to create such a histogram, please refer to
 <a href="https://github.com/mcvine/ui/wiki/Create-a-powder-S(Q,E)-histogram-file" target="_blank">Create a powder SQE histogram</a>
 <p>
-<hr>        
 """
         return ipyw.HTML(text)
     

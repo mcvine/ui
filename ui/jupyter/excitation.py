@@ -38,7 +38,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 class Step4_ExcitationType(wiz.Step_SingleChoice):
 
     def choices(self):
-        return ['powderSQE']
+        global excitation_types
+        return excitation_types
     def default_choice(self): return 'powderSQE'
 
     header_text = 'Excitation'
@@ -111,9 +112,11 @@ class Excitation(FormFactory):
 
     P = FormFactory.P
     parameters = []
-
     def createHelpText(self): raise NotImplementedError
+    pass
 
-from .excitations import powderSQE
+
+from .excitations import powderSQE, phonon_powder_incoherent
+excitation_types = ['powderSQE', 'phonon_powder_incoherent']
 
 # End of file 
