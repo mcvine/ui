@@ -94,7 +94,7 @@ class Step2_Lattice_abcabg(wiz.Step):
     
     def createBody(self):
         self.form_factory = Lattice_abcabg()
-        form = self.form_factory.createForm()
+        form = self.form_factory.createForm(preserve_order=True)
         widgets= [form]
         return ipyw.VBox(children=widgets)
 
