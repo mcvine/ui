@@ -48,7 +48,7 @@ class ARCS(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
-        P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
+        # P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
         P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "90.", "120."], converter=float),
@@ -60,7 +60,7 @@ class SEQUOIA(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
-        P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
+        # P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
         P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
         P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "90.", "120."], converter=float),
