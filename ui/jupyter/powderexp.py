@@ -261,4 +261,15 @@ notifications = dict(
     running = 'Your simulation of "{instrument_name}" powder experiment is now running in "{work_dir}".',
     )
 
+
+def main():
+    import sys
+    configfile = sys.argv[1]
+    context = wiz.Context()
+    context.load(configfile)
+    run(context)
+    return
+
+if __name__ == '__main__': main()
+
 # End of file 
