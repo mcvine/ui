@@ -223,14 +223,22 @@ def create_project(
     # beam
     shutil.rmtree(os.path.join(work, 'beam'))
     os.symlink(beam_dir, os.path.join(work, 'beam'))
+    Ei = _getEi(beam_dir)
     # sample
     sa_dir = os.path.join(work, 'sampleassembly')
     shutil.rmtree(sa_dir)
-    from mcvine.workflow.sample import loadSampleYml
+    from mcvine.workflow.sample import loadSampleYml, dgs_setEi
     sample = loadSampleYml(sample_yaml)
+    dgs_setEi(sample, Ei)
     from mcvine.workflow.sampleassembly.scaffolding import createSampleAssembly
     createSampleAssembly(sa_dir, sample)
     return
+
+
+def _getEi(beam):
+    props = eval(open(os.path.join(beam, 'out/props.json')).read())
+    ei = float(props['average energy'].split(' ')[0])
+    return ei
 
 
 def run(context):
