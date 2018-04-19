@@ -117,6 +117,7 @@ class SimFF(FormFactory):
         P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
         P(name='buffer_size', label="Neutron buffer size", choices=["1e6", "1e7"], converter=lambda x: int(float(x))),
+        P(name='multiple_scattering', label="Multiple scattering", value=False),
         # P(name='Qaxis', label="Qaxis (Qmin Qmax dQ). unit: inverse angstrom", widget=ipyw.Text("0 15 0.1"), converter=lambda x: map(float, x.split())),
     ]
 
@@ -206,7 +207,7 @@ Please examine the files and make modifications if you see fit.
 
 def create_project(
         beam_dir='beam', sample_yaml='sample.yaml', work_dir='work',
-        ncount=int(1e8), buffer_size=int(1e6), nodes=10,
+        ncount=int(1e8), buffer_size=int(1e6), nodes=10, multiple_scattering=False,
         # Qaxis=[0.0, 15.0, 0.1],
         instrument_name='ARCS'):
     type = 'DGS'
@@ -216,7 +217,7 @@ def create_project(
         shutil.rmtree(work)
     cmd = 'mcvine workflow powder --type {type} --instrument {instrument_name} '
     cmd += '--sample=V --workdir {work} --ncount {ncount} --buffer_size {buffer_size} '
-    cmd += '--nodes {nodes} '  # --qaxis "{Qaxis[0]} {Qaxis[1]} {Qaxis[2]}"'
+    cmd += '--multiple_scattering {multiple_scattering} --nodes {nodes} '  # --qaxis "{Qaxis[0]} {Qaxis[1]} {Qaxis[2]}"'
     cmd = cmd.format(**locals())
     if os.system(cmd):
         raise RuntimeError("%s failed" % cmd)
