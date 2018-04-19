@@ -4,7 +4,7 @@
 #
 
 from __future__ import print_function
-import os
+import os, numpy as np
 import ipywidgets as ipyw
 from . import wizard as wiz
 from .Form import FormFactory
@@ -44,14 +44,16 @@ of parameters.
 </div>""")
 
 
+arcs_fermi_freqs = list(np.arange(600, 59, -60.))
+arcs_T0_freqs = list(np.arange(180., 29., -30.))
 class ARCS(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
         # P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-1.5-SMI', '700-1.5-SMI', '700-0.5-AST']),
-        P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
-        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "90.", "120."], converter=float),
+        P(name="fermi_nu", label="Fermi chopper frequency", choices=arcs_fermi_freqs, converter=float),
+        P(name="T0_nu", label="T0 chopper frequency", choices=arcs_T0_freqs, converter=float),
         P(name="with_moderator_angling", default=True),
     ]
     
@@ -62,8 +64,8 @@ class SEQUOIA(DGS):
     parameters = DGS.parameters + [
         # P(name='emission_time', label="Emission time", widget=ipyw.Text("-1."), converter=float),
         P(name="fermi_chopper", label="Fermi chopper", choices=['100-2.03-AST', '700-3.56-AST','700-0.5-AST']),
-        P(name="fermi_nu", label="Fermi chopper frequency", choices=[600., 480., 360., 300.]),
-        P(name="T0_nu", label="T0 chopper frequency", choices=["60.", "90.", "120."], converter=float),
+        P(name="fermi_nu", label="Fermi chopper frequency", choices=arcs_fermi_freqs, converter=float),
+        P(name="T0_nu", label="T0 chopper frequency", choices=arcs_T0_freqs, converter=float),
     ]
 
 
