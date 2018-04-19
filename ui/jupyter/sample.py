@@ -51,13 +51,15 @@ class Step1_Chemical_formula(wiz.Step):
         return ipyw.HTML("<h3>%s</h3>" % self.header_text)
 
     def createBody(self):
-        self.text = ipyw.Text(value="e.g. V2O3", description='Chemical formula')
-        self.body = ipyw.VBox(children=[self.text])
+        self.chemical_formula_text = ipyw.Text(value="e.g. V2O3", description='Chemical formula')
+        self.packing_factor_text = ipyw.FloatText(value="1.0", description='Packing factor')
+        self.body = ipyw.VBox(children=[self.chemical_formula_text, self.packing_factor_text])
         return self.body
 
     def validate(self):
+        # formula
         from mcvine.workflow.sampleassembly.scaffolding.utils import decode_chemicalformula
-        try: formula = decode_chemicalformula(self.text.value)
+        try: formula = decode_chemicalformula(self.chemical_formula_text.value)
         except Exception as ex:
             self.updateStatusBar("Failed to decode chemical formula.\n" + str(ex))
             return False
@@ -66,7 +68,14 @@ class Step1_Chemical_formula(wiz.Step):
             return False
         s = ''.join('%s%s' % (k,v) for k,v in formula.items())
         if isinstance(s, unicode): s = s.encode()
+        # packing factor
+        packing_factor = self.packing_factor_text.value
+        if packing_factor <= 0:
+            self.updateStatusBar("Packing factor has to be positive")
+            return False
+        # finalize
         self.context.chemical_formula = s
+        self.context.packing_factor = packing_factor
         return True
     
     def createNextStep(self):
@@ -164,8 +173,9 @@ class Step7_Confirmation(wiz.Step):
         return ipyw.HTML("<h4>Confirmation</h4>")
     
     def createBody(self):
-        labels = ['name', 'chemical_formula', 'lattice', 'directory']
-        values = [self.context.name, self.context.chemical_formula, str(self.context.lattice), self.context.work_dir]
+        labels = ['name', 'chemical_formula', 'packing_factor', 'lattice', 'directory']
+        values = [self.context.name, self.context.chemical_formula, self.context.packing_factor,
+                  str(self.context.lattice), self.context.work_dir]
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         info = ipyw.HBox(
@@ -220,6 +230,7 @@ class Step7_Confirmation(wiz.Step):
         d = dict(
             name = c.name,
             chemical_formula = c.chemical_formula,
+            packing_factor = c.packing_factor,
             lattice = lattice,
             excitation = excitation,
             shape = shape,
