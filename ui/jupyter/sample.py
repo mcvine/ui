@@ -216,7 +216,7 @@ class Step7_Confirmation(wiz.Step):
     
     def generate(self):
         c = self.context
-        from danse.ins.matter import Lattice
+        from diffpy.Structure import Lattice
         lattice_constants = c.lattice.totuple()
         lattice = Lattice(*lattice_constants)
         base = [','.join(list(map(str, v))) for v in lattice.base]
