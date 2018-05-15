@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (ui)
 
-set(VERSION "0.0.1a8")
+set(VERSION "0.0.1a9")
 set(AUTHOR "Jiao Lin")
 set(AUTHOR_EMAILE "jiao.lin@gmail.com")
 set(VENDOR "MCViNE")
