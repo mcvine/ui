@@ -320,12 +320,15 @@ class Step7_Confirmation(wiz.Step):
             d['lattice'] = lattice
         else:
             assert c.structure_file
-            d['structure_file'] = c.structure_file
+            sf = c.structure_file
+            if isinstance(sf, unicode):
+                sf = sf.encode()
+            d['structure_file'] = sf
         path = os.path.join(c.work_dir, c.name+'.yaml')
         print("writing to %s" % path)
         import yaml
         with open(path, 'w') as outfile:
-            yaml.dump(d, outfile, default_flow_style=False)
+            yaml.safe_dump(d, outfile, default_flow_style=False)
         return
 
     pass
