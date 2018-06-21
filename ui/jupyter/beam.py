@@ -90,18 +90,22 @@ class CNCS(DGS):
     ]
 
 
+hyspec_fermi_freqs = list(np.arange(60, 421., 60.))
 class HYSPEC(DGS):
 
     P = FormFactory.P
     parameters = DGS.parameters + [
-        P(name="fermi_nu", label="Fermi chopper frequency", choices=["180."], converter=float),
+        P(name="fermi_nu", label="Fermi chopper frequency", default=180., choices=hyspec_fermi_freqs, converter=float),
         P(name='E', label="Nominal energy", default="20.", converter=float),
-        P(name="Emin", label="Minimum incident energy", default="10.", converter=float),
-        P(name="Emax", label="Maximum incident energy", default="30.", converter=float),
-        P(name="LMS", label = 'monochromator to sample distance. unit: meter', default="1.8", converter=float)
+        # P(name="Emin", label="Minimum incident energy", default="10.", converter=float),
+        # P(name="Emax", label="Maximum incident energy", default="30.", converter=float),
+        P(name="Heusler", label = 'Use Heusler focusing', default=False, widget=ipyw.Checkbox(value=False)),
+        # P(name="LMS", label = 'monochromator to sample distance. unit: meter', default="1.8", converter=float)
     ]
 
     def crossCheckInputs(self):
+        return
+        # following is obsolete
         inputs = self.inputs
         if inputs['Emin'] >= inputs['E']:
             raise ValueError("Minimum incident energy should be smaller than nominal energy")
