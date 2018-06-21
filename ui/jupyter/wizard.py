@@ -22,7 +22,7 @@ class Context(wiz.Context):
             d[k] = v
             continue
         with open(path, 'w') as outfile:
-            yaml.dump(d, outfile, default_flow_style=False)
+            yaml.safe_dump(d, outfile, default_flow_style=False)
         return
 
     def load(self, path):
