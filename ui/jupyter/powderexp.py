@@ -113,7 +113,7 @@ class SimFF(FormFactory):
     P = FormFactory.P
     parameters = [
         # P(name='type', label="Instrument type", widget=ipyw.Text("DGS")),
-        P(name='instrument_name', label="Instrument name", choices=['ARCS', 'SEQUOIA', 'CNCS']),
+        P(name='instrument_name', label="Instrument name", choices=['ARCS', 'SEQUOIA', 'CNCS', 'HYSPEC']),
         P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
         P(name='buffer_size', label="Neutron buffer size", choices=["1e6", "1e7"], converter=lambda x: int(float(x))),
@@ -144,8 +144,47 @@ class Step3_Sim_Params(wiz.Step):
         return True
     
     def createNextStep(self):
-        return Step4_Confirm(self.context)
+        # see if there is custom step like Step_Config_HYSPEC_Sim
+        try:
+            ns = eval('Step_Config_%s_Sim' % self.context.instrument_name)
+        except NameError:
+            # default next step is to confirm
+            return Step4_Confirm(self.context)
+        return ns(self.context)
 
+    pass
+
+
+class HYSPEC_SimFF(FormFactory):
+
+    P = FormFactory.P
+    parameters = [
+        P(name='detector_vessel_angle', label="Detector vessel angle", value="0.", converter=float),
+    ]
+    
+class Step_Config_HYSPEC_Sim(wiz.Step):
+    def createHeader(self):
+        return ipyw.HTML("<h4>HYSPEC: additional simulation parameters</h4>")
+    
+    def createBody(self):
+        self.form_factory = HYSPEC_SimFF()
+        form = self.form_factory.createForm()
+        widgets= [form]
+        return ipyw.VBox(children=widgets)
+
+    def validate(self):
+        params = self.form_factory.inputs
+        # check user input
+        if not params:
+            self.updateStatusBar("Please check your inputs")
+            return False
+        # save user input
+        for k, v in params.items():
+            setattr(self.context, k, v)
+        return True
+    
+    def createNextStep(self):
+        return Step4_Confirm(self.context)
     pass
 
 
@@ -163,6 +202,18 @@ class Step4_Confirm(wiz.Step):
             v = getattr(self.context, k)
             values.append(str(v))
             continue
+        # additional params
+        try:
+            additional_simff = eval('%s_SimFF' % self.context.instrument_name)
+        except:
+            additional_simff = None
+        if additional_simff:
+            params = [p.name for p in additional_simff.parameters]
+            for k in params:
+                labels.append(k)
+                v = getattr(self.context, k)
+                values.append(str(v))
+                continue
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))
         info = ipyw.HBox(
@@ -190,6 +241,9 @@ class Step4_Confirm(wiz.Step):
         for k,v in self.context.iter_kvpairs():
             if k=='email': continue
             params[k] = v
+        # set default value for detector_vessel_angle
+        if 'detector_vessel_angle' not in params:
+            params['detector_vessel_angle'] = 0
         create_project(**params)
         self.print_instructions()
         return
@@ -208,6 +262,7 @@ Please examine the files and make modifications if you see fit.
 def create_project(
         beam_dir='beam', sample_yaml='sample.yaml', work_dir='work',
         ncount=int(1e8), buffer_size=int(1e6), nodes=10, multiple_scattering=False,
+        detector_vessel_angle=None,
         # Qaxis=[0.0, 15.0, 0.1],
         instrument_name='ARCS'):
     type = 'DGS'
@@ -218,6 +273,7 @@ def create_project(
     cmd = 'mcvine workflow powder --type {type} --instrument {instrument_name} '
     cmd += '--sample=V --workdir {work} --ncount {ncount} --buffer_size {buffer_size} '
     cmd += '--multiple_scattering {multiple_scattering} --nodes {nodes} '  # --qaxis "{Qaxis[0]} {Qaxis[1]} {Qaxis[2]}"'
+    cmd += '--detector-vessel-angle {detector_vessel_angle}'
     cmd = cmd.format(**locals())
     if os.system(cmd):
         raise RuntimeError("%s failed" % cmd)
