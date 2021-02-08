@@ -27,7 +27,6 @@ class Parameter:
                 raise AttributeError(k)
             setattr(self, k, v)
         return
-                
 
 class FormFactory:
 
@@ -38,7 +37,7 @@ class FormFactory:
     ff = FormFactory()
     form = ff.createForm()
     frame = ipyw.VBox(children=[form])
-    
+
     ff.inputs is a dictionary with all user inputs stored
     """
 
@@ -47,11 +46,11 @@ class FormFactory:
         # gather parameters and establish a map from name to parameter
         self.name2param = collections.OrderedDict()
         for p in self.__class__.parameters: self.name2param[p.name] = p
-        self.parameters = self.name2param.values()
+        self.parameters = list(self.name2param.values())
         # parameters are now unique.
         # For any duplicates, the later defines override the earlier ones
         return
-    
+
     def createForm(self, preserve_order=False):
         kwds = dict()
         if preserve_order:

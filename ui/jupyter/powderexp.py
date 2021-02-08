@@ -182,7 +182,7 @@ class Step_Config_HYSPEC_Sim(wiz.Step):
         for k, v in params.items():
             setattr(self.context, k, v)
         return True
-    
+
     def createNextStep(self):
         return Step4_Confirm(self.context)
     pass
