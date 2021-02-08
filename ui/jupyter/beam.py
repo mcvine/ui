@@ -36,7 +36,7 @@ class DGS(FormFactory):
         P(name='ncount', label="Neutron count", widget=ipyw.Text("1e8"), converter=lambda x: int(float(x))),
         P(name="nodes", label="Number of cores", range=(1,20)),
     ]
-    
+
     def createHelpText(self):
         return ipyw.HTML("""<div>
 Click <a target="_blank" href="https://github.com/mcvine/ui/wiki/DGS-instrument-beam-simulation-parameters">here</a> for explanations
@@ -56,8 +56,7 @@ class ARCS(DGS):
         P(name="T0_nu", label="T0 chopper frequency", choices=arcs_T0_freqs, converter=float),
         P(name="with_moderator_angling", default=True),
     ]
-    
-        
+
 class SEQUOIA(DGS):
 
     P = FormFactory.P
@@ -127,10 +126,10 @@ class Step0_Instrument(wiz.Step):
     def validate(self):
         self.context.instrument = self.select.value
         return True
-    
+
     def createNextStep(self):
         return Step1_Parameters(self.context)
-    
+
     def nextStep(self):
         # need to overload this function, since the next step depends on
         # the choice in this step
@@ -138,12 +137,12 @@ class Step0_Instrument(wiz.Step):
         next_step.previous_step = self
         next_step.show()
         return
-                                                                            
+
 class Step1_Parameters(wiz.Step):
 
     def createHeader(self):
         return ipyw.HTML("<h4>Beam configuration for %s</h4>" % self.context.instrument)
-    
+
     def createBody(self):
         self.form_factory = eval(self.context.instrument)()
         doc = self.form_factory.createHelpText()
@@ -159,7 +158,7 @@ class Step1_Parameters(wiz.Step):
             return False
         self.context.params = params # save user input
         return True
-    
+
     def createNextStep(self):
         return Step2_Outdir(self.context)
 
@@ -170,7 +169,7 @@ class Step2_Outdir(wiz.Step_SelectDir):
     context_attr_name = 'outdir'
     target_name = 'output'
     newdir = True
-    
+
     def createNextStep(self):
         return Step3_Confirm(self.context)
 
@@ -179,7 +178,7 @@ class Step3_Confirm(wiz.Step):
 
     def createHeader(self):
         return ipyw.HTML("<h4>Confirmation</h4>")
-    
+
     def createBody(self):
         labels = ["Instrument"]; values = [self.context.instrument]
         params = self.context.params
@@ -218,7 +217,6 @@ class Step3_Confirm(wiz.Step):
 
     def nextStep(self):
         return simulate(self.context)
-    
 
 def simulate(context, dry_run=False):
     params = context.params
@@ -250,7 +248,6 @@ def simulate(context, dry_run=False):
     # email
     notify(context.email, status, context)
     return
-    
 
 def notify(email, status, context):
     params = context.__dict__
