@@ -27,7 +27,7 @@ def saveEmailToConfig(email):
     config.set('user', 'email', email)
     dir = os.path.dirname(mcvine_config)
     if not os.path.exists(dir): os.makedirs(dir)
-    with open(mcvine_config, 'ab') as f:
+    with open(mcvine_config, 'a') as f:
         config.write(f)
     return
 
@@ -46,4 +46,3 @@ class Step_Email(wiz.Step):
         self.context.email = email = self.text.value
         saveEmailToConfig(email)
         return True
-    
