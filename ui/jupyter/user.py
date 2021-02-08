@@ -3,11 +3,11 @@ import os
 import ipywidgets as ipyw
 from IPython.display import display
 import ipywe.wizard as wiz
-import ConfigParser
+import configparser
 
 mcvine_config = os.path.expanduser('~/.mcvine/mcvine.cfg')
 def getEmailFromConfig():
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     path = mcvine_config
     if not os.path.exists(path): return
     config.read(path)
@@ -19,18 +19,18 @@ def getEmailFromConfig():
 
 
 def saveEmailToConfig(email):
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     try:
         config.add_section('user')
-    except ConfigParser.DuplicateSectionError:
+    except configparser.DuplicateSectionError:
         pass
     config.set('user', 'email', email)
     dir = os.path.dirname(mcvine_config)
     if not os.path.exists(dir): os.makedirs(dir)
-    with open(mcvine_config, 'ab') as f:
+    with open(mcvine_config, 'a') as f:
         config.write(f)
     return
-        
+
 
 class Step_Email(wiz.Step):
 
@@ -46,4 +46,3 @@ class Step_Email(wiz.Step):
         self.context.email = email = self.text.value
         saveEmailToConfig(email)
         return True
-    

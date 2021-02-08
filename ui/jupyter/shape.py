@@ -22,11 +22,11 @@ class Step3_ShapeType(wiz.Step_SingleChoice):
     header_text = 'Shape'
     def createHeader(self):
         return ipyw.HTML("<h3>%s</h3>" % self.header_text)
-    
+
     def validate(self):
         self.context.shape_type = self.select.value
         return True
-    
+
     def nextStep(self):
         # need to overload this function, since the next step depends on
         # the choice in this step
@@ -34,16 +34,16 @@ class Step3_ShapeType(wiz.Step_SingleChoice):
         next_step.previous_step = self
         next_step.show()
         return
-                                                                            
+
     def createNextStep(self):
         return Step3a_ShapeConfig(self.context)
 
 
 class Step3a_ShapeConfig(wiz.Step):
-    
+
     def createHeader(self):
         return ipyw.HTML("<h4>%s configuration</h4>" % self.context.shape_type)
-    
+
     def createBody(self):
         self.form_factory = eval(self.context.shape_type.capitalize())()
         form = self.form_factory.createForm()
@@ -58,7 +58,7 @@ class Step3a_ShapeConfig(wiz.Step):
             return False
         self.context.shape_params = params # save user input
         return True
-    
+
     def createNextStep(self):
         from .excitation import Step4_ExcitationType
         return Step4_ExcitationType(self.context)
@@ -77,7 +77,7 @@ class Sphere(Shape):
     parameters = Shape.parameters + [
         P(name='radius', label="radius", widget=ipyw.Text("1.*cm"), converter=str),
     ]
-    
+
 class Cylinder(Shape):
 
     P = FormFactory.P
@@ -85,7 +85,7 @@ class Cylinder(Shape):
         P(name='radius', label="radius", widget=ipyw.Text("1.*cm"), converter=str),
         P(name='height', label="height", widget=ipyw.Text("5.*cm"), converter=str),
     ]
-    
+
 class Block(Shape):
 
     P = FormFactory.P
@@ -94,7 +94,7 @@ class Block(Shape):
         P(name='height', label="height", widget=ipyw.Text("1.*cm"), converter=str),
         P(name='thickness', label="thickness", widget=ipyw.Text("1.*cm"), converter=str),
     ]
-    
+
 class Hollowcylinder(Shape):
 
     P = FormFactory.P
@@ -103,7 +103,7 @@ class Hollowcylinder(Shape):
         P(name='out_radius', label="out_radius", widget=ipyw.Text("1.1*cm"), converter=str),
         P(name='height', label="height", widget=ipyw.Text("5.*cm"), converter=str),
     ]
-    
+
 class Sphereshell(Shape):
 
     P = FormFactory.P

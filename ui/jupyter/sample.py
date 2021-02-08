@@ -153,7 +153,7 @@ def _check_chemical_formula(text):
     if not len(formula):
         raise ValueError("Empty formula")
     s = ''.join('%s%s' % (k,v) for k,v in formula.items())
-    if isinstance(s, unicode): s = s.encode()
+    # if isinstance(s, unicode): s = s.encode()
     return s
 
 
@@ -234,7 +234,7 @@ class Step6_Name(wiz.Step):
 
     def validate(self):
         v = self.text.value
-        if isinstance(v, unicode): v = v.encode()
+        # if isinstance(v, unicode): v = v.encode()
         self.context.name = v
         return True
     
@@ -266,8 +266,8 @@ class Step7_Confirmation(wiz.Step):
 
         shape_title = ipyw.HTML("<h4>Shape: %s</h4>" % self.context.shape_type)
         shape_params = self.context.shape_params
-        labels = shape_params.keys()
-        values = shape_params.values()
+        labels = list(shape_params.keys())
+        values = list(shape_params.values())
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in values))        
         shape_info = ipyw.HBox(
@@ -277,8 +277,8 @@ class Step7_Confirmation(wiz.Step):
 
         excitation_title = ipyw.HTML("<h4>Excitation: %s</h4>" % self.context.excitation_type)
         excitation_params = self.context.excitation_params
-        labels = excitation_params.keys()
-        values = excitation_params.values()
+        labels = list(excitation_params.keys())
+        values = list(excitation_params.values())
         labels_html = ipyw.HTML("\n".join("<p>%s</p>" % l for l in labels))
         values_html = ipyw.HTML("\n".join("<p>%s</p>" % (l,) for l in values))        
         excitation_info = ipyw.HBox(
@@ -311,7 +311,7 @@ class Step7_Confirmation(wiz.Step):
         if c.lattice:
             lattice_constants = c.lattice.totuple()
             lattice = Lattice(*lattice_constants)
-            base = [','.join(list(map(str, v))) for v in lattice.base]
+            base = [','.join(map(str, v)) for v in lattice.base]
             lattice = dict(
                 constants = ','.join(map(str, lattice_constants)),
                 basis_vectors = base,
@@ -321,8 +321,7 @@ class Step7_Confirmation(wiz.Step):
         else:
             assert c.structure_file
             sf = c.structure_file
-            if isinstance(sf, unicode):
-                sf = sf.encode()
+            # if isinstance(sf, str): sf = sf.encode()
             d['structure_file'] = sf
         path = os.path.join(c.work_dir, c.name+'.yaml')
         print("writing to %s" % path)

@@ -10,7 +10,7 @@ def validate_path(p):
     p = os.path.abspath(p)
     assert os.path.exists(p)
     assert p.endswith('.h5')
-    if isinstance(p, unicode): p = p.encode()
+    # if isinstance(p, unicode): p = p.encode()
     return p
 
 def validate_range(unit):
@@ -18,11 +18,10 @@ def validate_range(unit):
         return '%s*%s' % (v, unit)
     def _(qr):
         qr = eval(qr)
-        qr = map(float, qr)
-        qr = map(_to_q, qr)
+        qr = list(map(float, qr))
+        qr = list(map(_to_q, qr))
         s =  ','.join(qr)
-        if isinstance(s, unicode):
-            s = s.encode()
+        # if isinstance(s, str): s = s.encode()
         return s
     return _
 
